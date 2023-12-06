@@ -3,38 +3,29 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
+#include "TinyTankCharacter.generated.h"
 
-#include "TinyTankPawn.generated.h"
-
-class UCapsuleComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class AProjectile;
 class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
-class UFloatingPawnMovement;
 
 UCLASS()
-class TINYTANKS_API ATinyTankPawn : public APawn
+class TINYTANKS_API ATinyTankCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	ATinyTankPawn();
+	ATinyTankCharacter();
 
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
 	virtual void BeginPlay() override;
-
-    UPROPERTY(VisibleAnywhere, Category = "Components")
-    TObjectPtr<UCapsuleComponent> CapsuleCollider;
-
-    UPROPERTY(EditAnywhere, Category = "Components")
-    TObjectPtr<UFloatingPawnMovement> MovementComponent;
 
     UPROPERTY(EditAnywhere, Category = "Components")
     TObjectPtr<USpringArmComponent> SpringArm;
@@ -51,12 +42,4 @@ protected:
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<USceneComponent> ProjectileSpawnPoint;
 
-    /* UPROPERTY(EditDefaultsOnly, Category = "Combat")
-    TSubclassOf<AProjectile> ProjectileClass;*/
-    /* UPROPERTY(EditAnywhere, Category = "Combat")
-     TObjectPtr<UParticleSystem> DeathParticles;*/
-     /* UPROPERTY(EditAnywhere, Category = "Combat")
-      TObjectPtr<USoundBase> DeathSound;
-      UPROPERTY(EditAnywhere, Category = "Combat")
-      TSubclassOf<UCameraShakeBase> DeathCameraShakeClass;*/
 };

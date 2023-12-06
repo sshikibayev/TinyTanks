@@ -30,7 +30,7 @@ public:
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputMappingContext* DefaultMappingContext;
-	
+
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	class UInputAction* SetDestinationClickAction;
@@ -44,7 +44,7 @@ protected:
 	uint32 bMoveToMouseCursor : 1;
 
 	virtual void SetupInputComponent() override;
-	
+
 	// To add mapping context
 	virtual void BeginPlay();
 
