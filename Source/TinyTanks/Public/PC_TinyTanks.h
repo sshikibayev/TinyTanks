@@ -37,6 +37,9 @@ public:
     UPROPERTY(EditAnywhere, Category = Input)
     TSoftObjectPtr<UInputAction> IA_SetDestinationByClick;
 
+    UPROPERTY(EditAnywhere, Category = Input)
+    TSoftObjectPtr<UInputAction> IA_Fire;
+
 protected:
     virtual void BeginPlay();
     virtual void SetupInputComponent() override;
@@ -46,6 +49,8 @@ protected:
     void OnSetDestinationReleased();
     void OnTouchTriggered();
     void OnTouchReleased();
+
+    void OnFirePressed();
 
 private:
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;

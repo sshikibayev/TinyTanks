@@ -54,9 +54,18 @@ void ATinyTankCharacter::Tick(float DeltaTime)
 
 }
 
+TSubclassOf<ATinyTankProjectile> ATinyTankCharacter::GetProjectileClass()
+{
+    return ProjectileClass;
+}
+
+TObjectPtr<USceneComponent> ATinyTankCharacter::GetProjectileSpawnPoint()
+{
+    return ProjectileSpawnPoint;
+}
+
 void ATinyTankCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 }
-

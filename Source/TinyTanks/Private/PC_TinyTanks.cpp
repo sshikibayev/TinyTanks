@@ -12,6 +12,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "NavigationSystem.h"
+#include "TinyTankProjectile.h"
+#include "TinyTankCharacter.h"
+
 
 APC_TinyTanks::APC_TinyTanks()
 {
@@ -86,6 +89,21 @@ void APC_TinyTanks::OnTouchReleased()
     OnSetDestinationReleased();
 }
 
+void APC_TinyTanks::OnFirePressed()
+{
+    TObjectPtr<ATinyTankCharacter> TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
+    if (TinyTankCharacter)
+    {
+        TObjectPtr<ATinyTankProjectile> Projectile = GetWorld()->SpawnActor<ATinyTankProjectile>
+            (
+                TinyTankCharacter->GetProjectileClass(),
+                TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentLocation(),
+                TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentRotation()
+            );
+        Projectile ? Projectile->SetOwner(this) : nullptr;
+    }
+}
+
 void APC_TinyTanks::PrepareInputSubsystem()
 {
     TObjectPtr<APlayerController> PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
@@ -118,6 +136,8 @@ void APC_TinyTanks::BindInputActions()
     PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Triggered, this, &ThisClass::OnSetDestinationTriggered);
     PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Completed, this, &ThisClass::OnSetDestinationReleased);
     PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
+
+    PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
 }
 
 void APC_TinyTanks::OneTouchAction()
