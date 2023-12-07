@@ -14,6 +14,8 @@
 #include "NavigationSystem.h"
 #include "TinyTankProjectile.h"
 #include "TinyTankCharacter.h"
+#include "Kismet/GamePlayStatics.h"
+#include "UObject/ConstructorHelpers.h"
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -39,11 +41,6 @@ void APC_TinyTanks::SetupInputComponent()
     PrepareInputSubsystem();
     AddingMappingContext(InputSubsystem, IMC_TinyTanks);
     BindInputActions();
-}
-
-void APC_TinyTanks::TickActor(float DeltaTime, ELevelTick TickType, FActorTickFunction& ThisTickFunction)
-{
-    Super::TickActor(DeltaTime, TickType, ThisTickFunction);
 }
 
 void APC_TinyTanks::OnInputStarted()
@@ -94,8 +91,31 @@ void APC_TinyTanks::OnTouchReleased()
     OnSetDestinationReleased();
 }
 
+void APC_TinyTanks::LaunchFire()
+{
+    if (!bFiringWeapon)
+    {
+        bFiringWeapon = true;
+        GetWorld()->GetTimerManager().SetTimer(FiringTimer, this, &ThisClass::StopFire, FireRate, false);
+        HandleFire();
+    }
+}
+
+void APC_TinyTanks::StopFire()
+{
+    bFiringWeapon = false;
+}
+
 void APC_TinyTanks::OnFirePressed()
 {
+    LaunchFire();
+}
+
+void APC_TinyTanks::HandleFire_Implementation()
+{
+    FActorSpawnParameters SpawnParameters;
+    SpawnParameters.Instigator = GetInstigator();
+    SpawnParameters.Owner = this;
     TObjectPtr<ATinyTankCharacter> TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
     if (TinyTankCharacter)
     {
@@ -103,11 +123,13 @@ void APC_TinyTanks::OnFirePressed()
             (
                 TinyTankCharacter->GetProjectileClass(),
                 TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentLocation(),
-                TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentRotation()
+                TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentRotation(),
+                SpawnParameters
             );
         Projectile ? Projectile->SetOwner(this) : nullptr;
     }
 }
+
 
 void APC_TinyTanks::PrepareInputSubsystem()
 {

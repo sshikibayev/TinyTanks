@@ -5,13 +5,16 @@
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/DamageType.h"
-#include "Kismet/GamePlayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Camera/CameraShakeBase.h"
+#include "Kismet/GameplayStatics.h"
+
 
 ATinyTankProjectile::ATinyTankProjectile()
 {
     PrimaryActorTick.bCanEverTick = false;
+    bReplicates = true;
+
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
     SetRootComponent(Mesh);
 
@@ -29,7 +32,10 @@ void ATinyTankProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
-    Mesh->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+    if (GetLocalRole() == ROLE_Authority)
+    {
+        Mesh->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+    }
 
     if (LaunchSound)
     {
@@ -40,6 +46,28 @@ void ATinyTankProjectile::BeginPlay()
             GetActorLocation()
         );
     }
+}
+
+void ATinyTankProjectile::Destroyed()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Projectile destroyed"));
+
+    if (HitParticles && HitSound && HitCameraShakeClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Effects applied on a Projectile"));
+
+        UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, GetActorLocation(), GetActorRotation());
+        UGameplayStatics::PlaySoundAtLocation
+        (
+            this,
+            HitSound,
+            GetActorLocation()
+        );
+        GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(HitCameraShakeClass);
+
+    }
+
+    Super::Destroyed();
 }
 
 void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -62,20 +90,6 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
             );
 
             UE_LOG(LogTemp, Warning, TEXT("Damage applied to: %s"), *OtherActor->GetName());
-
-            if (HitParticles && HitSound && HitCameraShakeClass)
-            {
-                UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, GetActorLocation(), GetActorRotation());
-                UGameplayStatics::PlaySoundAtLocation
-                (
-                    this,
-                    HitSound,
-                    GetActorLocation()
-                );
-                GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(HitCameraShakeClass);
-
-                UE_LOG(LogTemp, Warning, TEXT("Effects applied"));
-            }
         }
     }
 

@@ -51,6 +51,36 @@ void ATinyTankCharacter::BeginPlay()
     Super::BeginPlay();
 }
 
+void ATinyTankCharacter::Destroyed()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Destroyed a character"));
+    SetActorHiddenInGame(true);
+    SetActorTickEnabled(false);
+    //bAlive = false;
+
+    SpringArm->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    BaseMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    TurretMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    ProjectileSpawnPoint->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+
+    if (DeathParticles && DeathSound && DeathCameraShakeClass && GetWorld()->GetFirstPlayerController())
+    {
+        UGameplayStatics::SpawnEmitterAtLocation(this, DeathParticles, GetActorLocation(), GetActorRotation());
+
+        UGameplayStatics::PlaySoundAtLocation
+        (
+            this,
+            DeathSound,
+            GetActorLocation()
+        );
+
+        GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(DeathCameraShakeClass);
+    }
+
+    Super::Destroyed();
+}
+
 void ATinyTankCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -72,30 +102,6 @@ void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 void ATinyTankCharacter::HandleDestruction()
 {
-    SetActorHiddenInGame(true);
-    SetActorTickEnabled(false);
-    //bAlive = false;
-
-    SpringArm->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-    Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-    BaseMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-    TurretMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-    ProjectileSpawnPoint->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-
-    if (DeathParticles && DeathSound && DeathCameraShakeClass)
-    {
-        UGameplayStatics::SpawnEmitterAtLocation(this, DeathParticles, GetActorLocation(), GetActorRotation());
-
-        UGameplayStatics::PlaySoundAtLocation
-        (
-            this,
-            DeathSound,
-            GetActorLocation()
-        );
-
-        GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(DeathCameraShakeClass);
-    }
-
     Destroy();
 }
 

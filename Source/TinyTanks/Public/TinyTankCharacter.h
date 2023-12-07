@@ -54,6 +54,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void Destroyed() override;
 
     UPROPERTY(EditAnywhere, Category = "Components")
     TObjectPtr<USpringArmComponent> SpringArm;

@@ -22,31 +22,30 @@ public:
 	ATinyTankProjectile();
 
     virtual void Tick(float DeltaTime) override;
+
 protected:
 
 	virtual void BeginPlay() override;
+    virtual void Destroyed() override;
 
 private:
     UPROPERTY(EditInstanceOnly, Category = "Combat")
     TObjectPtr<UStaticMeshComponent> Mesh;
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     TObjectPtr<UProjectileMovementComponent> ProjectileMovementComponent;
-
-    UFUNCTION()
-    void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
     UPROPERTY(EditAnywhere)
     float Damage{ 1.0f };
     UPROPERTY(EditAnywhere, Category = "Combat")
     TObjectPtr<UParticleSystem> HitParticles;
-
     UPROPERTY(VisibleAnywhere, Category = "Combat")
     TObjectPtr<UParticleSystemComponent> ParticleSystemComponent;
-
     UPROPERTY(EditAnywhere, Category = "Combat")
     TObjectPtr<USoundBase> LaunchSound;
     UPROPERTY(EditAnywhere, Category = "Combat")
     TObjectPtr<USoundBase> HitSound;
     UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
+
+    UFUNCTION()
+    void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 };

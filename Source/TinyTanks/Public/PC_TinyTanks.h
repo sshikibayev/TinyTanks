@@ -43,13 +43,17 @@ public:
 protected:
     virtual void BeginPlay();
     virtual void SetupInputComponent() override;
-    virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 
     void OnInputStarted();
     void OnSetDestinationTriggered();
     void OnSetDestinationReleased();
     void OnTouchTriggered();
     void OnTouchReleased();
+
+    UFUNCTION()
+    void LaunchFire();
+    UFUNCTION()
+    void StopFire();
 
     void OnFirePressed();
 
@@ -61,6 +65,15 @@ private:
 
     FVector CachedDestination;
     float FollowTime; // For how long it has been pressed
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float FireRate{ 0.25f };
+
+    bool bFiringWeapon{ false };
+    FTimerHandle FiringTimer;
+
+    UFUNCTION(Server, Reliable)
+    void HandleFire();
 
     void PrepareInputSubsystem();
     void AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext);
