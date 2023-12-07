@@ -49,14 +49,14 @@ ATinyTankCharacter::ATinyTankCharacter()
 void ATinyTankCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    SetActorTransform(GetRespawnPoint());
 }
 
 void ATinyTankCharacter::Destroyed()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Destroyed a character"));
     SetActorHiddenInGame(true);
     SetActorTickEnabled(false);
-    //bAlive = false;
 
     SpringArm->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
     Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);

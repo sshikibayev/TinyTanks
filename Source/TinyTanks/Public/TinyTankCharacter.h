@@ -44,11 +44,6 @@ public:
         return ProjectileSpawnPoint;
     };
 
-   /* FORCEINLINE bool GetIsAlive()
-    {
-        return bAlive;
-    }*/
-
     void HandleDestruction();
     FTransform GetRespawnPoint();
 
@@ -86,7 +81,6 @@ protected:
     TArray<FTransform> RespawnPoints{};
 
 private:
-    //bool bAlive{ true }; //TODO figure out where it was used
     UPROPERTY(Replicated)
     FTransform RespawnPoint;
 };

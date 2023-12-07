@@ -50,12 +50,8 @@ void ATinyTankProjectile::BeginPlay()
 
 void ATinyTankProjectile::Destroyed()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Projectile destroyed"));
-
     if (HitParticles && HitSound && HitCameraShakeClass)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Effects applied on a Projectile"));
-
         UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, GetActorLocation(), GetActorRotation());
         UGameplayStatics::PlaySoundAtLocation
         (
@@ -88,8 +84,6 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 this,
                 DamageTypeClass
             );
-
-            UE_LOG(LogTemp, Warning, TEXT("Damage applied to: %s"), *OtherActor->GetName());
         }
     }
 

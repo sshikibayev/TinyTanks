@@ -59,9 +59,7 @@ protected:
 
 private:
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-
     TObjectPtr<UNavigationSystemV1> NavSystem;
-    TObjectPtr<APawn> TinyTankPawn;
 
     FVector CachedDestination;
     float FollowTime; // For how long it has been pressed

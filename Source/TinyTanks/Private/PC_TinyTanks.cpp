@@ -30,7 +30,6 @@ void APC_TinyTanks::BeginPlay()
 {
     Super::BeginPlay();
 
-    TinyTankPawn = GetPawn();
     //NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 }
 
@@ -58,6 +57,7 @@ void APC_TinyTanks::OnSetDestinationTriggered()
         CachedDestination = Hit.Location;
     }
 
+    TObjectPtr<APawn> TinyTankPawn{ GetPawn() };
     if (TinyTankPawn)
     {
         FVector WorldDirection = (CachedDestination - TinyTankPawn->GetActorLocation()).GetSafeNormal();
