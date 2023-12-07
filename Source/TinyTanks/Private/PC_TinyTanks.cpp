@@ -22,6 +22,8 @@
 APC_TinyTanks::APC_TinyTanks()
 {
     bShowMouseCursor = true;
+    bEnableClickEvents = true;
+    bEnableMouseOverEvents = true;
     DefaultMouseCursor = EMouseCursor::Default;
     CachedDestination = FVector::ZeroVector;
     FollowTime = 0.f;
@@ -35,6 +37,11 @@ void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 void APC_TinyTanks::BeginPlay()
 {
     Super::BeginPlay();
+
+    FInputModeGameAndUI InputMode;
+    InputMode.SetHideCursorDuringCapture(false);
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+    SetInputMode(InputMode);
 }
 
 void APC_TinyTanks::SetupInputComponent()
@@ -73,7 +80,6 @@ void APC_TinyTanks::OnSetDestinationTriggered()
 void APC_TinyTanks::OnSetDestinationReleased()
 {
     OneTouchAction();
-
     FollowTime = 0.f;
 }
 

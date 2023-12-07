@@ -22,9 +22,6 @@ class TINYTANKS_API ATinyTankCharacter : public ACharacter
 public:
     ATinyTankCharacter();
 
-    UPROPERTY(EditAnywhere)
-    bool bAutoFire{ false };
-
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
