@@ -43,6 +43,7 @@ public:
 protected:
     virtual void BeginPlay();
     virtual void SetupInputComponent() override;
+    virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 
     void OnInputStarted();
     void OnSetDestinationTriggered();

@@ -29,7 +29,7 @@ void APC_TinyTanks::BeginPlay()
     Super::BeginPlay();
 
     TinyTankPawn = GetPawn();
-    NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+    //NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 }
 
 void APC_TinyTanks::SetupInputComponent()
@@ -39,6 +39,11 @@ void APC_TinyTanks::SetupInputComponent()
     PrepareInputSubsystem();
     AddingMappingContext(InputSubsystem, IMC_TinyTanks);
     BindInputActions();
+}
+
+void APC_TinyTanks::TickActor(float DeltaTime, ELevelTick TickType, FActorTickFunction& ThisTickFunction)
+{
+    Super::TickActor(DeltaTime, TickType, ThisTickFunction);
 }
 
 void APC_TinyTanks::OnInputStarted()

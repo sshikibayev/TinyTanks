@@ -61,6 +61,8 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 DamageTypeClass
             );
 
+            UE_LOG(LogTemp, Warning, TEXT("Damage applied to: %s"), *OtherActor->GetName());
+
             if (HitParticles && HitSound && HitCameraShakeClass)
             {
                 UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, GetActorLocation(), GetActorRotation());
@@ -71,19 +73,19 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                     GetActorLocation()
                 );
                 GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(HitCameraShakeClass);
+
+                UE_LOG(LogTemp, Warning, TEXT("Effects applied"));
             }
         }
-        Destroy();
     }
-    else
-    {
-        Destroy();
-    }
+
+    Mesh->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    ParticleSystemComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    Destroy();
 }
 
 void ATinyTankProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 

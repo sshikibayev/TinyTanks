@@ -7,6 +7,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ATinyTankCharacter::ATinyTankCharacter()
 {
@@ -41,31 +42,70 @@ ATinyTankCharacter::ATinyTankCharacter()
 
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
+
+    Tags.Emplace(TEXT("TinyTank"));
 }
 
 void ATinyTankCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 }
 
 void ATinyTankCharacter::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
-}
-
-TSubclassOf<ATinyTankProjectile> ATinyTankCharacter::GetProjectileClass()
-{
-    return ProjectileClass;
-}
-
-TObjectPtr<USceneComponent> ATinyTankCharacter::GetProjectileSpawnPoint()
-{
-    return ProjectileSpawnPoint;
 }
 
 void ATinyTankCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ThisClass, RespawnPoint);
+}
+
+void ATinyTankCharacter::HandleDestruction()
+{
+    SetActorHiddenInGame(true);
+    SetActorTickEnabled(false);
+    //bAlive = false;
+
+    SpringArm->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    BaseMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    TurretMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    ProjectileSpawnPoint->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+
+    if (DeathParticles && DeathSound && DeathCameraShakeClass)
+    {
+        UGameplayStatics::SpawnEmitterAtLocation(this, DeathParticles, GetActorLocation(), GetActorRotation());
+
+        UGameplayStatics::PlaySoundAtLocation
+        (
+            this,
+            DeathSound,
+            GetActorLocation()
+        );
+
+        GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(DeathCameraShakeClass);
+    }
+
+    Destroy();
+}
+
+FTransform ATinyTankCharacter::GetRespawnPoint()
+{
+    if (HasAuthority())
+    {
+        FTransform RandomRespawnPoint = RespawnPoints[FMath::RandRange(0, RespawnPoints.Num() - 1)];
+        RespawnPoint = RandomRespawnPoint;
+    }
+
+    return RespawnPoint;
 }

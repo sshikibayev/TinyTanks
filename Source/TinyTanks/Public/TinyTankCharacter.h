@@ -22,11 +22,35 @@ class TINYTANKS_API ATinyTankCharacter : public ACharacter
 public:
     ATinyTankCharacter();
 
+    UPROPERTY(EditAnywhere)
+    bool bAutoFire{ false };
+
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
-    TSubclassOf<ATinyTankProjectile> GetProjectileClass();
-    TObjectPtr<USceneComponent> GetProjectileSpawnPoint();
+    FORCEINLINE TSubclassOf<ATinyTankProjectile> GetProjectileClass() const
+    {
+        return ProjectileClass;
+    };
+
+    FORCEINLINE TSubclassOf<ATinyTankCharacter> GetTinyTankCharacterClass() const
+    {
+        return TinyTankCharacterClass;
+    };
+
+    FORCEINLINE TObjectPtr<USceneComponent> GetProjectileSpawnPoint() const
+    {
+        return ProjectileSpawnPoint;
+    };
+
+   /* FORCEINLINE bool GetIsAlive()
+    {
+        return bAlive;
+    }*/
+
+    void HandleDestruction();
+    FTransform GetRespawnPoint();
 
 protected:
     virtual void BeginPlay() override;
@@ -54,4 +78,14 @@ protected:
     TObjectPtr<USoundBase> DeathSound;
     UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<UCameraShakeBase> DeathCameraShakeClass;
+
+    UPROPERTY(EditAnywhere, Category = "Respawn")
+    TSubclassOf<ATinyTankCharacter> TinyTankCharacterClass;
+    UPROPERTY(EditAnywhere, Category = "Respawn")
+    TArray<FTransform> RespawnPoints{};
+
+private:
+    //bool bAlive{ true }; //TODO figure out where it was used
+    UPROPERTY(Replicated)
+    FTransform RespawnPoint;
 };
