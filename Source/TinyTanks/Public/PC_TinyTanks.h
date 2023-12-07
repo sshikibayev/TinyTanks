@@ -20,14 +20,11 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 
 public:
     APC_TinyTanks();
+    virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
-    /** Time Threshold to know if it was a short press */
     UPROPERTY(EditAnywhere, Category = Input)
     float ShortPressThreshold{ 3.0f };
-    UPROPERTY(EditAnywhere, Category = Movement)
-    float RotationSpeed{ 5.0f };
 
-    /** FX Class that we will spawn when clicking */
     UPROPERTY(EditAnywhere, Category = Input)
     TObjectPtr<UNiagaraSystem> FXCursor;
 
@@ -59,10 +56,9 @@ protected:
 
 private:
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-    TObjectPtr<UNavigationSystemV1> NavSystem;
 
     FVector CachedDestination;
-    float FollowTime; // For how long it has been pressed
+    float FollowTime;
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float FireRate{ 0.25f };
@@ -71,10 +67,14 @@ private:
     FTimerHandle FiringTimer;
 
     UFUNCTION(Server, Reliable)
-    void HandleFire();
+    void Server_HandleFire();
+    UFUNCTION(Server, Reliable)
+    void Server_NavigationMove(const FVector& TargetDestionation);
+    UFUNCTION(Server, Reliable)
+    void Server_StopMovement();
 
+    void OneTouchAction();
     void PrepareInputSubsystem();
     void AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext);
     void BindInputActions();
-    void OneTouchAction();
 };

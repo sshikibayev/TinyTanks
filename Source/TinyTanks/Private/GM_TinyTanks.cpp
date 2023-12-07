@@ -31,7 +31,7 @@ void AGM_TinyTanks::RespawnPlayer()
     FTransform RespawnPoint{ TinyTank->GetRespawnPoint() };
 
     FActorSpawnParameters SpawnParams;
-    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
     TObjectPtr<ATinyTankCharacter> NewSpawnTinyTank{ GetWorld()->SpawnActor<ATinyTankCharacter>
         (
             TinyTank->GetTinyTankCharacterClass(),

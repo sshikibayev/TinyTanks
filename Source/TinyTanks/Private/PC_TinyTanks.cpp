@@ -16,6 +16,7 @@
 #include "TinyTankCharacter.h"
 #include "Kismet/GamePlayStatics.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -26,17 +27,19 @@ APC_TinyTanks::APC_TinyTanks()
     FollowTime = 0.f;
 }
 
+void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
 void APC_TinyTanks::BeginPlay()
 {
     Super::BeginPlay();
-
-    //NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 }
 
 void APC_TinyTanks::SetupInputComponent()
 {
     Super::SetupInputComponent();
-
     PrepareInputSubsystem();
     AddingMappingContext(InputSubsystem, IMC_TinyTanks);
     BindInputActions();
@@ -45,6 +48,8 @@ void APC_TinyTanks::SetupInputComponent()
 void APC_TinyTanks::OnInputStarted()
 {
     StopMovement();
+
+    Server_StopMovement();
 }
 
 void APC_TinyTanks::OnSetDestinationTriggered()
@@ -61,15 +66,6 @@ void APC_TinyTanks::OnSetDestinationTriggered()
     if (TinyTankPawn)
     {
         FVector WorldDirection = (CachedDestination - TinyTankPawn->GetActorLocation()).GetSafeNormal();
-
-        /*FMatrix RotationMatrix = FRotationMatrix::MakeFromX(WorldDirection);
-        FRotator CurrentRotation = TinyTankPawn->GetActorRotation();
-        FRotator DesiredRotation = RotationMatrix.Rotator();
-        DesiredRotation.Roll = 0;
-        DesiredRotation.Pitch = 0;
-        FRotator NewRotation = FMath::RInterpTo(CurrentRotation, DesiredRotation, GetWorld()->GetDeltaSeconds(), RotationSpeed);*/
-
-        //TinyTankPawn->SetActorRotation(NewRotation);
         TinyTankPawn->AddMovementInput(WorldDirection, 1.0, false);
     }
 }
@@ -97,7 +93,7 @@ void APC_TinyTanks::LaunchFire()
     {
         bFiringWeapon = true;
         GetWorld()->GetTimerManager().SetTimer(FiringTimer, this, &ThisClass::StopFire, FireRate, false);
-        HandleFire();
+        Server_HandleFire();
     }
 }
 
@@ -111,7 +107,7 @@ void APC_TinyTanks::OnFirePressed()
     LaunchFire();
 }
 
-void APC_TinyTanks::HandleFire_Implementation()
+void APC_TinyTanks::Server_HandleFire_Implementation()
 {
     FActorSpawnParameters SpawnParameters;
     SpawnParameters.Instigator = GetInstigator();
@@ -130,6 +126,15 @@ void APC_TinyTanks::HandleFire_Implementation()
     }
 }
 
+void APC_TinyTanks::Server_NavigationMove_Implementation(const FVector& TargetDestionation)
+{
+    UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestionation);
+}
+
+void APC_TinyTanks::Server_StopMovement_Implementation()
+{
+    StopMovement();
+}
 
 void APC_TinyTanks::PrepareInputSubsystem()
 {
@@ -167,34 +172,13 @@ void APC_TinyTanks::BindInputActions()
     PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
 }
 
+
 void APC_TinyTanks::OneTouchAction()
 {
     if (FollowTime <= ShortPressThreshold)
     {
-        //if (NavSystem && TinyTankPawn)
-        //{
-        //    UE_LOG(LogTemp, Warning, TEXT("Nav mesh is valid"));
-        //    FPathFindingQuery Query;
-        //    Query.StartLocation = TinyTankPawn->GetActorLocation();
-        //    Query.EndLocation = CachedDestination;
-
-        //    FPathFindingResult Result = NavSystem->FindPathSync(Query);
-
-        //    if (Result.Path.IsValid())
-        //    {
-        //        // You can iterate through Result.Path to get individual points on the path
-        //        // For simplicity, this example just sets the destination as the last point in the path
-        //        //FVector Destination = Result.Path.Get()->GetPathPoints().Last();
-        //        if (Result.Path.Get())
-        //        {
-        //            UE_LOG(LogTemp, Warning, TEXT("Result is valid"));
-        //            FVector Destination = Result.Path.Get()->GetGoalLocation();
-        //            TinyTankPawn->SetActorLocation(Destination);
-        //        }
-        //        // Use your own logic to move the pawn to the destination
-        //    }
-        //}
         UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
+        Server_NavigationMove(CachedDestination);
     }
 }
