@@ -1,7 +1,7 @@
 
 
 
-#include "TinyTankProjectile.h"
+#include "Projectile/TinyTankProjectile.h"
 
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/DamageType.h"

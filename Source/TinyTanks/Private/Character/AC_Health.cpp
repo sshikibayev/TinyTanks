@@ -1,9 +1,9 @@
 
 
 
-#include "AC_Health.h"
+#include "Character/AC_Health.h"
 
-#include "GM_TinyTanks.h"
+#include "Character/GM_TinyTanks.h"
 #include "Kismet/GamePlayStatics.h"
 
 

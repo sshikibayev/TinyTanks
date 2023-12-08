@@ -1,7 +1,7 @@
 
 
 
-#include "PC_TinyTanks.h"
+#include "Character/PC_TinyTanks.h"
 
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraSystem.h"
@@ -12,8 +12,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "NavigationSystem.h"
-#include "TinyTankProjectile.h"
-#include "TinyTankCharacter.h"
+#include "Projectile/TinyTankProjectile.h"
+#include "Character/TinyTankCharacter.h"
 #include "Kismet/GamePlayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/UnrealNetwork.h"

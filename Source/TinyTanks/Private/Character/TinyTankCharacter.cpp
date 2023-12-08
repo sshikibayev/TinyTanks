@@ -1,7 +1,7 @@
 
 
 
-#include "TinyTankCharacter.h"
+#include "Character/TinyTankCharacter.h"
 
 #include "Kismet/GamePlayStatics.h"
 #include "GameFramework/SpringArmComponent.h"

@@ -1,8 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "TinyTanksGameMode.h"
-#include "TinyTanksPlayerController.h"
-#include "TinyTanksCharacter.h"
+#include "TopDown/TinyTanksGameMode.h"
+#include "TopDown/TinyTanksPlayerController.h"
+#include "TopDown/TinyTanksCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 ATinyTanksGameMode::ATinyTanksGameMode()

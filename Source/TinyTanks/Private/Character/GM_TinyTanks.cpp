@@ -1,9 +1,9 @@
 
 
-#include "GM_TinyTanks.h"
+#include "Character/GM_TinyTanks.h"
 
-#include "TinyTankCharacter.h"
-#include "PC_TinyTanks.h"
+#include "Character/TinyTankCharacter.h"
+#include "Character/PC_TinyTanks.h"
 #include "Kismet/GamePlayStatics.h"
 
 
