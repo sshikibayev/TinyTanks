@@ -21,14 +21,10 @@ class TINYTANKS_API ATinyTankProjectile : public AActor
 public:
 	ATinyTankProjectile();
 
-    virtual void Tick(float DeltaTime) override;
-
 protected:
-
 	virtual void BeginPlay() override;
     virtual void Destroyed() override;
 
-private:
     UPROPERTY(EditInstanceOnly, Category = "Combat")
     TObjectPtr<UStaticMeshComponent> Mesh;
     UPROPERTY(VisibleAnywhere, Category = "Combat")
@@ -46,6 +42,14 @@ private:
     UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<UCameraShakeBase> HitCameraShakeClass;
 
+private:
+    const float InitialSpeed{ 1000.0f };
+    const float MaxSpeed{ 3000.0f };
+
+    void PlaySound(TObjectPtr<USoundBase> SoundToPlay);
+
     UFUNCTION()
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+    void ShowDeathEffects();
 };

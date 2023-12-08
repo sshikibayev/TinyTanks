@@ -4,21 +4,15 @@
 #include "Character/PC_TinyTanks.h"
 
 #include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputActionValue.h"
-#include "NavigationSystem.h"
+#include "Kismet/GamePlayStatics.h"
 #include "Projectile/TinyTankProjectile.h"
 #include "Character/TinyTankCharacter.h"
-#include "Kismet/GamePlayStatics.h"
-#include "UObject/ConstructorHelpers.h"
-#include "Net/UnrealNetwork.h"
-#include "Navigation/PathFollowingComponent.h"
-#include <Character/GM_TinyTanks.h>
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -31,9 +25,19 @@ APC_TinyTanks::APC_TinyTanks()
     FollowTime = 0.f;
 }
 
-void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APC_TinyTanks::BeginPlay()
 {
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    Super::BeginPlay();
+
+    SetupInputMode();
+}
+
+void APC_TinyTanks::SetupInputMode()
+{
+    FInputModeGameAndUI InputMode;
+    InputMode.SetHideCursorDuringCapture(false);
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+    SetInputMode(InputMode);
 }
 
 void APC_TinyTanks::StopAllMovements()
@@ -42,22 +46,53 @@ void APC_TinyTanks::StopAllMovements()
     Server_StopMovement();
 }
 
-void APC_TinyTanks::BeginPlay()
+void APC_TinyTanks::Server_StopMovement_Implementation()
 {
-    Super::BeginPlay();
-
-    FInputModeGameAndUI InputMode;
-    InputMode.SetHideCursorDuringCapture(false);
-    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
-    SetInputMode(InputMode);
+    StopMovement();
 }
 
 void APC_TinyTanks::SetupInputComponent()
 {
     Super::SetupInputComponent();
+
     PrepareInputSubsystem();
     AddingMappingContext(InputSubsystem, IMC_TinyTanks);
     BindInputActions();
+}
+
+void APC_TinyTanks::PrepareInputSubsystem()
+{
+    TObjectPtr<APlayerController> PlayerController{ Cast<APlayerController>(GetWorld()->GetFirstPlayerController()) };
+    if (PlayerController)
+    {
+        if (TObjectPtr<ULocalPlayer> LocalPlayer = PlayerController->GetLocalPlayer())
+        {
+            InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+        }
+    }
+}
+
+void APC_TinyTanks::AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext)
+{
+    if (Subsystem && !MappingContext.IsNull())
+    {
+        Subsystem->ClearAllMappings();
+        Subsystem->AddMappingContext(MappingContext.LoadSynchronous(), 0);
+    }
+}
+
+void APC_TinyTanks::BindInputActions()
+{
+    TObjectPtr<UEnhancedInputComponent> PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
+    if (PlayerEnhancedInputComponent)
+    {
+        PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Started, this, &ThisClass::OnInputStarted);
+        PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Triggered, this, &ThisClass::OnSetDestinationTriggered);
+        PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Completed, this, &ThisClass::OnSetDestinationReleased);
+        PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
+
+        PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
+    }
 }
 
 void APC_TinyTanks::OnInputStarted()
@@ -76,6 +111,11 @@ void APC_TinyTanks::OnSetDestinationTriggered()
         CachedDestination = Hit.Location;
     }
 
+    MakeContinuesMovement();
+}
+
+void APC_TinyTanks::MakeContinuesMovement()
+{
     TObjectPtr<APawn> TinyTankPawn{ GetPawn() };
     if (TinyTankPawn)
     {
@@ -90,17 +130,23 @@ void APC_TinyTanks::OnSetDestinationReleased()
     FollowTime = 0.f;
 }
 
-void APC_TinyTanks::OnTouchTriggered()
+void APC_TinyTanks::OneTouchAction()
 {
-    OnSetDestinationTriggered();
+    if (FollowTime <= ShortPressThreshold)
+    {
+        UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
+
+        Server_NavigationMove(CachedDestination);
+    }
 }
 
-void APC_TinyTanks::OnTouchReleased()
+void APC_TinyTanks::Server_NavigationMove_Implementation(const FVector& TargetDestination)
 {
-    OnSetDestinationReleased();
+    UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestination);
 }
 
-void APC_TinyTanks::LaunchFire()
+void APC_TinyTanks::OnFirePressed()
 {
     if (!bFiringWeapon)
     {
@@ -108,16 +154,6 @@ void APC_TinyTanks::LaunchFire()
         GetWorld()->GetTimerManager().SetTimer(FiringTimer, this, &ThisClass::StopFire, FireRate, false);
         Server_HandleFire();
     }
-}
-
-void APC_TinyTanks::StopFire()
-{
-    bFiringWeapon = false;
-}
-
-void APC_TinyTanks::OnFirePressed()
-{
-    LaunchFire();
 }
 
 void APC_TinyTanks::Server_HandleFire_Implementation()
@@ -135,62 +171,10 @@ void APC_TinyTanks::Server_HandleFire_Implementation()
                 TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentRotation(),
                 SpawnParameters
             );
-        Projectile ? Projectile->SetOwner(this) : nullptr;
     }
 }
 
-void APC_TinyTanks::Server_NavigationMove_Implementation(const FVector& TargetDestination)
+void APC_TinyTanks::StopFire()
 {
-    UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestination);
-}
-
-void APC_TinyTanks::Server_StopMovement_Implementation()
-{
-    StopMovement();
-}
-
-void APC_TinyTanks::PrepareInputSubsystem()
-{
-    TObjectPtr<APlayerController> PlayerController = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
-    if (!PlayerController)
-        return;
-
-    TObjectPtr<ULocalPlayer> LocalPlayer = PlayerController->GetLocalPlayer();
-    if (LocalPlayer)
-    {
-        InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-    }
-}
-
-void APC_TinyTanks::AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext)
-{
-    if (Subsystem && !MappingContext.IsNull())
-    {
-        Subsystem->ClearAllMappings();
-        Subsystem->AddMappingContext(MappingContext.LoadSynchronous(), 0);
-    }
-}
-
-void APC_TinyTanks::BindInputActions()
-{
-    TObjectPtr<UEnhancedInputComponent> PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
-    if (!PlayerEnhancedInputComponent)
-        return;
-
-    PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Started, this, &ThisClass::OnInputStarted);
-    PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Triggered, this, &ThisClass::OnSetDestinationTriggered);
-    PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Completed, this, &ThisClass::OnSetDestinationReleased);
-    PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
-
-    PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
-}
-
-void APC_TinyTanks::OneTouchAction()
-{
-    if (FollowTime <= ShortPressThreshold)
-    {
-        UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true, true, ENCPoolMethod::None, true);
-        Server_NavigationMove(CachedDestination);
-    }
+    bFiringWeapon = false;
 }

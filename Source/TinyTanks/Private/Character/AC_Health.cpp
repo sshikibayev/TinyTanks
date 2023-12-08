@@ -9,7 +9,7 @@
 
 UAC_Health::UAC_Health()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UAC_Health::BeginPlay()
@@ -23,11 +23,6 @@ void UAC_Health::BeginPlay()
         GetOwner()->OnTakeAnyDamage.AddDynamic(this, &ThisClass::DamageTaken);
         GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));
     }
-}
-
-void UAC_Health::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 void UAC_Health::DamageTaken(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* Instigator, AActor* DamageCauser)

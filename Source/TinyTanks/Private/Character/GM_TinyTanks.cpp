@@ -4,12 +4,11 @@
 
 #include "Character/TinyTankCharacter.h"
 #include "Character/PC_TinyTanks.h"
-#include "Kismet/GamePlayStatics.h"
 
 
 void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
 {
-    if (DeadActor && DeadActor->Tags.Contains("TinyTank"))
+    if (DeadActor && DeadActor->Tags.Contains(TinyTankTag))
     {
         if (TinyTank = Cast<ATinyTankCharacter>(DeadActor))
         {
@@ -17,29 +16,79 @@ void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
             PC_TinyTanks->StopAllMovements();
             TinyTank->HandleDestruction();
 
-            RespawnPlayer();
+            FTransform ValidSpawnPoint{ GetValidSpawnPoint(TinyTank) };
+            RespawnPlayer(ValidSpawnPoint);
         }
     }
 }
 
-void AGM_TinyTanks::BeginPlay()
+FTransform AGM_TinyTanks::GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter> TinyTankCharacter)
 {
+    const int MaxTries{ 25 };
+    int CountTries{ 0 };
+    FTransform CurrentSpawnPoint{ TinyTankCharacter->GetRespawnPoint() };
 
+    while (CountTries <= MaxTries)
+    {
+        bool bFoundValidPoint{ true };
+        ++CountTries;
+
+        TArray<struct FOverlapResult> OverlappingResults{};
+        CurrentSpawnPoint = TinyTankCharacter->GetRespawnPoint();
+
+        if (GetOverlapResult(CurrentSpawnPoint.GetLocation(), OverlappingResults))
+        {
+            for (const struct FOverlapResult& OverlappingActor : OverlappingResults)
+            {
+                if (OverlappingActor.GetActor() && OverlappingActor.GetActor()->Tags.Contains(TinyTankTag))
+                {
+                    bFoundValidPoint = false;
+                    break;
+                }
+            }
+        }
+
+        if (bFoundValidPoint)
+        {
+            CountTries = 0;
+            return CurrentSpawnPoint;
+        }
+    }
+    CountTries = 0;
+
+    return CurrentSpawnPoint;
 }
 
-void AGM_TinyTanks::RespawnPlayer()
+bool AGM_TinyTanks::GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult)
 {
-    FTransform RespawnPoint{ TinyTank->GetRespawnPoint() };
+    const float SphereRadius{ 100.0f };
+    FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::AllObjects);
+    FCollisionShape CollisionShape = FCollisionShape::MakeSphere(SphereRadius);
+    FCollisionQueryParams CollisionParams;
 
+    bool bHit = GetWorld()->OverlapMultiByObjectType(
+        OutOverlappedResult,
+        OverlapLocation,
+        FQuat::Identity,
+        ObjectQueryParams,
+        CollisionShape,
+        CollisionParams
+    );
+
+    return bHit;
+}
+
+void AGM_TinyTanks::RespawnPlayer(const FTransform& SpawnPoint)
+{
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
     TObjectPtr<ATinyTankCharacter> NewSpawnTinyTank{ GetWorld()->SpawnActor<ATinyTankCharacter>
         (
             TinyTank->GetTinyTankCharacterClass(),
-            RespawnPoint.GetLocation(),
-            RespawnPoint.GetRotation().Rotator(),
+            SpawnPoint.GetLocation(),
+            SpawnPoint.GetRotation().Rotator(),
             SpawnParams
-        )};
+        ) };
 
     if (PC_TinyTanks)
     {

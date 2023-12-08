@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
 #include "TinyTankCharacter.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
-class AProjectile;
 class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
@@ -21,10 +21,6 @@ class TINYTANKS_API ATinyTankCharacter : public ACharacter
 
 public:
     ATinyTankCharacter();
-
-    virtual void Tick(float DeltaTime) override;
-    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-    virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
     FORCEINLINE TSubclassOf<ATinyTankProjectile> GetProjectileClass() const
     {
@@ -50,16 +46,12 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Components")
     TObjectPtr<USpringArmComponent> SpringArm;
-
     UPROPERTY(EditAnywhere, Category = "Components")
     TObjectPtr<UCameraComponent> Camera;
-
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
-
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<UStaticMeshComponent> TurretMeshComponent;
-
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<USceneComponent> ProjectileSpawnPoint;
 
@@ -78,6 +70,13 @@ protected:
     TArray<FTransform> RespawnPoints{};
 
 private:
-    UPROPERTY(Replicated)
+    const FName TinyTankTag{ "TinyTank" };
+    const float TargetArmLength{ 800.0f };
+    const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
     FTransform RespawnPoint;
+
+    void SetupMovementSettings();
+    void PathFindingRefresh();
+    void DetachComponent();
+    void ShowDeathEffects();
 };

@@ -16,13 +16,13 @@ class TINYTANKS_API AGM_TinyTanks : public AGameMode
 
 public:
     void ActorDied(TObjectPtr<AActor> DeadActor);
-
-protected:
-    virtual void BeginPlay();
+    FTransform GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter> TinyTankCharacter);
 
 private:
     TObjectPtr<ATinyTankCharacter> TinyTank;
     TObjectPtr<APC_TinyTanks> PC_TinyTanks;
+    FName TinyTankTag{ "TinyTank" };
 
-    void RespawnPlayer();
+    bool GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult);
+    void RespawnPlayer(const FTransform& SpawnPoint);
 };

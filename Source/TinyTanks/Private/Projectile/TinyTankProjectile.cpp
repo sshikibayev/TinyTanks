@@ -23,55 +23,56 @@ ATinyTankProjectile::ATinyTankProjectile()
 
     ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile movement component"));
 
-    ProjectileMovementComponent->InitialSpeed = 4000.0f;
-    ProjectileMovementComponent->MaxSpeed = 8000.0f;
-
+    ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+    ProjectileMovementComponent->MaxSpeed = MaxSpeed;
 }
 
 void ATinyTankProjectile::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
     if (GetLocalRole() == ROLE_Authority)
     {
         Mesh->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
     }
 
-    if (LaunchSound)
-    {
-        UGameplayStatics::PlaySoundAtLocation
-        (
-            this,
-            LaunchSound,
-            GetActorLocation()
-        );
-    }
+    PlaySound(LaunchSound);
 }
 
 void ATinyTankProjectile::Destroyed()
 {
-    if (HitParticles && HitSound && HitCameraShakeClass)
-    {
-        UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, GetActorLocation(), GetActorRotation());
-        UGameplayStatics::PlaySoundAtLocation
-        (
-            this,
-            HitSound,
-            GetActorLocation()
-        );
-        GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(HitCameraShakeClass);
-
-    }
+    ShowDeathEffects();
 
     Super::Destroyed();
 }
 
+void ATinyTankProjectile::ShowDeathEffects()
+{
+    if (HitParticles && HitSound && HitCameraShakeClass)
+    {
+        UGameplayStatics::SpawnEmitterAtLocation(this, HitParticles, GetActorLocation(), GetActorRotation());
+        PlaySound(HitSound);
+        GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(HitCameraShakeClass);
+    }
+}
+void ATinyTankProjectile::PlaySound(TObjectPtr<USoundBase> SoundToPlay)
+{
+    if (SoundToPlay)
+    {
+        UGameplayStatics::PlaySoundAtLocation
+        (
+            this,
+            SoundToPlay,
+            GetActorLocation()
+        );
+    }
+}
+
 void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    TObjectPtr<AActor> MyOwner = GetOwner();
-    if (MyOwner)
+    if (TObjectPtr<AActor> MyOwner{ GetOwner() })
     {
-        TObjectPtr<AController> MyOwnerInstigator = MyOwner->GetInstigatorController();
+        TObjectPtr<AController> MyOwnerInstigator{ MyOwner->GetInstigatorController() };
         auto DamageTypeClass = UDamageType::StaticClass();
 
         if (OtherActor && OtherActor != this && OtherActor != MyOwner)
@@ -87,13 +88,7 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
         }
     }
 
-    Mesh->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
     ParticleSystemComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+
     Destroy();
 }
-
-void ATinyTankProjectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-

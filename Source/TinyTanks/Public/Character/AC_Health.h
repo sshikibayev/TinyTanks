@@ -16,8 +16,6 @@ class TINYTANKS_API UAC_Health : public UActorComponent
 public:
 	UAC_Health();
 
-    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -25,9 +23,8 @@ private:
     UPROPERTY(EditAnywhere);
     float MaxHealth{ 1.0f };
     float Health{ 0.0f };
+    TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
 
     UFUNCTION()
     void DamageTaken(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* Instigator, AActor* DamageCauser);
-
-     TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
 };
