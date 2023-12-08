@@ -22,6 +22,8 @@ public:
     APC_TinyTanks();
     virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
+    void StopAllMovements();
+
     UPROPERTY(EditAnywhere, Category = Input)
     float ShortPressThreshold{ 3.0f };
 
@@ -59,6 +61,8 @@ private:
 
     FVector CachedDestination;
     float FollowTime;
+
+    int FireCount{ 0 };
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float FireRate{ 0.25f };

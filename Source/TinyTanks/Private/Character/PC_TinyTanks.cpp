@@ -17,6 +17,8 @@
 #include "Kismet/GamePlayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "Navigation/PathFollowingComponent.h"
+#include <Character/GM_TinyTanks.h>
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -32,6 +34,12 @@ APC_TinyTanks::APC_TinyTanks()
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+void APC_TinyTanks::StopAllMovements()
+{
+    StopMovement();
+    Server_StopMovement();
 }
 
 void APC_TinyTanks::BeginPlay()
@@ -55,7 +63,6 @@ void APC_TinyTanks::SetupInputComponent()
 void APC_TinyTanks::OnInputStarted()
 {
     StopMovement();
-
     Server_StopMovement();
 }
 
@@ -132,9 +139,9 @@ void APC_TinyTanks::Server_HandleFire_Implementation()
     }
 }
 
-void APC_TinyTanks::Server_NavigationMove_Implementation(const FVector& TargetDestionation)
+void APC_TinyTanks::Server_NavigationMove_Implementation(const FVector& TargetDestination)
 {
-    UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestionation);
+    UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestination);
 }
 
 void APC_TinyTanks::Server_StopMovement_Implementation()
@@ -177,7 +184,6 @@ void APC_TinyTanks::BindInputActions()
 
     PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
 }
-
 
 void APC_TinyTanks::OneTouchAction()
 {

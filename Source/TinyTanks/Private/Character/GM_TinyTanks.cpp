@@ -14,6 +14,7 @@ void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
         if (TinyTank = Cast<ATinyTankCharacter>(DeadActor))
         {
             PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController());
+            PC_TinyTanks->StopAllMovements();
             TinyTank->HandleDestruction();
 
             RespawnPlayer();

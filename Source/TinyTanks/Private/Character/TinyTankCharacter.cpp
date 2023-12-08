@@ -7,7 +7,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Net/UnrealNetwork.h"
+#include <Character/PC_TinyTanks.h>
 
 ATinyTankCharacter::ATinyTankCharacter()
 {
@@ -51,6 +53,20 @@ void ATinyTankCharacter::BeginPlay()
     Super::BeginPlay();
 
     SetActorTransform(GetRespawnPoint());
+
+    if (!HasAuthority())
+    {
+        TObjectPtr<APC_TinyTanks> PC_TinyTank{ Cast<APC_TinyTanks>(GetController()) };
+        if (PC_TinyTank)
+        {
+            TObjectPtr<UPathFollowingComponent> PathFollowingComp = PC_TinyTank->FindComponentByClass<UPathFollowingComponent>();
+            if (PathFollowingComp)
+            {
+                PathFollowingComp->UpdateCachedComponents();
+            }
+        }
+    }
+
 }
 
 void ATinyTankCharacter::Destroyed()
