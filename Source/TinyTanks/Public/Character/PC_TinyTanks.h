@@ -36,9 +36,7 @@ public:
 protected:
     virtual void BeginPlay();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
     virtual void SetupInputComponent() override;
-    virtual void Destroyed() override;
 
     void OnInputStarted();
     void OnSetDestinationTriggered();
@@ -88,11 +86,14 @@ private:
     UFUNCTION(Server, Reliable)
     void ServerStopMovement();
 
-    UFUNCTION()
-    void OnPlayerJoined();
+    UFUNCTION(Server, Reliable)
+    void ServerSendValueToServer(FName PlayerNickname);
+    UFUNCTION(NetMulticast, Reliable)
+    void MulticastReplicateValue(FName PlayerNickname);
 
-    void BindToAPostLogin();
-    void UnbindFromAPostLogin();
+    UFUNCTION()
+    void UpdateWidgets();
+
     void UpdatePlayerStateDataOnAServer();
     void SetupInputMode();
     void ScoreboardInitialization();

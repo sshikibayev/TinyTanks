@@ -18,6 +18,7 @@
 #include "Widgets/Scoreboard/W_PlayerData.h"
 #include "Kismet/GamePlayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include <Character/GI_TinyTanks.h>
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -28,8 +29,6 @@ APC_TinyTanks::APC_TinyTanks()
     DefaultMouseCursor = EMouseCursor::Default;
     CachedDestination = FVector::ZeroVector;
     FollowTime = 0.f;
-
-    BindToAPostLogin();
 }
 
 void APC_TinyTanks::BeginPlay()
@@ -41,6 +40,9 @@ void APC_TinyTanks::BeginPlay()
     UpdatePlayerStateDataOnAServer();
 
     ScoreboardInitialization();
+
+    FTimerHandle TempTimer;
+    GetWorld()->GetTimerManager().SetTimer(TempTimer, this, &ThisClass::UpdateWidgets, 5.0f, false);
 }
 
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -48,25 +50,6 @@ void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ThisClass, OnScoreUpdated);
-}
-
-void APC_TinyTanks::Destroyed()
-{
-    UnbindFromAPostLogin();
-
-    Super::Destroyed();
-}
-
-void APC_TinyTanks::BindToAPostLogin()
-{
-    if (HasAuthority())
-    {
-        GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));
-        if (GM_TinyTanks)
-        {
-            GM_TinyTanks->OnPlayerJoin.AddDynamic(this, &ThisClass::OnPlayerJoined);
-        }
-    }
 }
 
 void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
@@ -77,6 +60,32 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
     }
 }
 
+void APC_TinyTanks::ServerSendValueToServer_Implementation(FName PlayerNickname)
+{
+    TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+    TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(PlayerState);
+    if (PlayerStateLocal && GameInstance)
+    {
+        PlayerStateLocal->SetPlayerName(FText::FromString(PlayerNickname.ToString()));
+        MulticastReplicateValue(FName(PlayerStateLocal->GetPlayerName().ToString()));
+    }
+}
+
+void APC_TinyTanks::MulticastReplicateValue_Implementation(FName PlayerNickname)
+{
+    TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(PlayerState);
+    TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+    if (PlayerStateLocal && GameInstance)
+    {
+        PlayerStateLocal->SetPlayerName(FText::FromString(PlayerNickname.ToString()));
+    }
+}
+
+void APC_TinyTanks::UpdateWidgets()
+{
+    OnScoreUpdated.Broadcast();
+}
+
 void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
 {
     if (HasAuthority())
@@ -84,9 +93,23 @@ void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
         PS_TinyTank = Cast<APS_TinyTank>(PlayerState);
         if (PS_TinyTank)
         {
-            PS_TinyTank->SetPlayerName(FText::FromString(PS_TinyTank->GetName()));
+             TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(UGameplayStatics::GetGameInstance(this));
+             TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(UGameplayStatics::GetPlayerState(this, 0));
+             if (GameInstance && PlayerStateLocal)
+             {
+                 PlayerStateLocal->SetPlayerName(FText::FromString(GameInstance->GetPlayerNickname().ToString()));
+             }
+
             PS_TinyTank->SetPlayerScore(0);
             OnScoreUpdated.Broadcast();
+        }
+    }
+    else
+    {
+        TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+        if (GameInstance)
+        {
+            ServerSendValueToServer(GameInstance->GetPlayerNickname());
         }
     }
 }
@@ -95,25 +118,16 @@ void APC_TinyTanks::UpdatePlayerScoreOnAServer(const int NewScore)
 {
     if (HasAuthority() && PS_TinyTank)
     {
+        TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(UGameplayStatics::GetGameInstance(this));
+        TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(UGameplayStatics::GetPlayerState(this, 0));
+        if (GameInstance && PlayerStateLocal)
+        {
+            PlayerStateLocal->SetPlayerName(FText::FromString(GameInstance->GetPlayerNickname().ToString()));
+        }
+
         PS_TinyTank->SetPlayerScore(PS_TinyTank->GetPlayerScore() + NewScore);
         OnScoreUpdated.Broadcast();
     }
-}
-
-void APC_TinyTanks::UnbindFromAPostLogin()
-{
-    if (HasAuthority())
-    {
-        GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));
-        if (GM_TinyTanks)
-        {
-            GM_TinyTanks->OnPlayerJoin.RemoveDynamic(this, &ThisClass::OnPlayerJoined);
-        }
-    }
-}
-
-void APC_TinyTanks::OnPlayerJoined()
-{
 }
 
 void APC_TinyTanks::ScoreboardInitialization()

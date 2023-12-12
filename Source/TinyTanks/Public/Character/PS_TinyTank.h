@@ -42,11 +42,15 @@ private:
 
     UPROPERTY(ReplicatedUsing = UpdateScore)
     int PlayerScore{ 0 };
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = UpdateName)
     FText PlayerName{ FText::FromString(TEXT("Player name")) };
 
+    UFUNCTION(Client, Reliable)
+    void ClientUpdateNicknames();
     UFUNCTION()
     void WidgetDataUpdate();
     UFUNCTION()
     void UpdateScore();
+    UFUNCTION()
+    void UpdateName();
 };

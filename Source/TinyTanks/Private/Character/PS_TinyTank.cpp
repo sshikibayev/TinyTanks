@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "Character/GI_TinyTanks.h"
 
 void APS_TinyTank::BeginPlay()
 {
@@ -59,6 +60,19 @@ void APS_TinyTank::SetPlayerScore(const int NewScore)
 void APS_TinyTank::SetPlayerName(const FText& NewName)
 {
     PlayerName = NewName;
+    ForceNetUpdate();
+}
+
+void APS_TinyTank::ClientUpdateNicknames_Implementation()
+{
+    TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(UGameplayStatics::GetGameInstance(this));
+    TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(UGameplayStatics::GetPlayerState(this, 0));
+    if (GameInstance && PlayerStateLocal)
+    {
+        PlayerStateLocal->SetPlayerName(FText::FromString(GameInstance->GetPlayerNickname().ToString()));
+    }
+
+    WidgetDataUpdate();
 }
 
 void APS_TinyTank::WidgetDataUpdate()
@@ -71,6 +85,11 @@ void APS_TinyTank::WidgetDataUpdate()
 }
 
 void APS_TinyTank::UpdateScore()
+{
+    WidgetDataUpdate();
+}
+
+void APS_TinyTank::UpdateName()
 {
     WidgetDataUpdate();
 }

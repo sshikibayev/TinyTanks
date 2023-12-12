@@ -7,6 +7,8 @@
 #include "Components/Button.h"
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/EditableText.h"
 
 void UMenu::SetupMenu(int32 NumberOfPublicConnections, FString TypeOfMatch, FString LobbyPath)
 {
@@ -46,6 +48,16 @@ void UMenu::SetupMenu(int32 NumberOfPublicConnections, FString TypeOfMatch, FStr
         MultiplayerSessionsSubsystem->MultiplayerOnStartSessionComplete.AddDynamic(this, &ThisClass::OnStartSession);
         MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
     }
+}
+
+FText UMenu::GetPlayerNickname()
+{
+    if (ET_Nickname)
+    {
+        return ET_Nickname->GetText();
+    }
+
+    return FText::FromString(TEXT("Unknown"));
 }
 
 bool UMenu::Initialize()
@@ -151,6 +163,8 @@ void UMenu::HostBtnClicked()
 {
     BTN_Host->SetIsEnabled(false);
 
+    OnHostPressed.Broadcast();
+
     if (MultiplayerSessionsSubsystem)
     {
         MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);
@@ -160,6 +174,8 @@ void UMenu::HostBtnClicked()
 void UMenu::JoinBtnClicked()
 {
     BTN_Join->SetIsEnabled(false);
+
+    OnJoinPressed.Broadcast();
 
     if (MultiplayerSessionsSubsystem)
     {

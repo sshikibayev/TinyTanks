@@ -9,16 +9,27 @@
 #include "Menu.generated.h"
 
 class UButton;
+class UEditableText;
 class UMultiplayerSessionsSubsystem;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHostPressed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnJoinPressed);
 
 UCLASS()
 class MULTIPLAYERSESSIONS_API UMenu : public UUserWidget
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
+    UPROPERTY(BlueprintAssignable, BlueprintCallable)
+    FOnHostPressed OnHostPressed;
+    UPROPERTY(BlueprintAssignable, BlueprintCallable)
+    FOnJoinPressed OnJoinPressed;
+
     UFUNCTION(BlueprintCallable)
     void SetupMenu(int32 NumberOfPublicConnections = 4, FString TypeOfMatch = "FreeForAll", FString LobbyPath = "/Game/ThirdPerson/Maps/Lobby");
+    UFUNCTION(BlueprintCallable)
+    FText GetPlayerNickname();
 
 protected:
     virtual bool Initialize() override;
@@ -38,13 +49,15 @@ protected:
 
 private:
     UPROPERTY(meta = (BindWidget))
+    TObjectPtr<UEditableText> ET_Nickname;
+    UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> BTN_Host;
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> BTN_Join;
 
     int32 NumPublicConnections{ 4 };
     FString MatchType{ "FreeForAll" };
-    FString PathToLobby{ TEXT("")};
+    FString PathToLobby{ TEXT("") };
 
     //The subsystem designed to handle all online session functionality.
     TObjectPtr<UMultiplayerSessionsSubsystem> MultiplayerSessionsSubsystem;
