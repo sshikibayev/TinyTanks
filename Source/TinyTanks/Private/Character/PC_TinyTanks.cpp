@@ -10,14 +10,13 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Kismet/GamePlayStatics.h"
 #include "Projectile/TinyTankProjectile.h"
 #include "Character/TinyTankCharacter.h"
 #include "Character/GM_TinyTanks.h"
 #include "Character/PS_TinyTank.h"
 #include "Widgets/Scoreboard/W_Scoreboard.h"
 #include "Widgets/Scoreboard/W_PlayerData.h"
-#include "GameFramework/GameStateBase.h"
+#include "Kismet/GamePlayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -41,12 +40,7 @@ void APC_TinyTanks::BeginPlay()
 
     UpdatePlayerStateDataOnAServer();
 
-    ScoreboradInitialization();
-}
-
-void APC_TinyTanks::Tick(float DeltaSeconds)
-{
-    Super::Tick(DeltaSeconds);
+    ScoreboardInitialization();
 }
 
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -54,12 +48,6 @@ void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ThisClass, OnScoreUpdated);
-}
-
-void APC_TinyTanks::OnRep_PlayerState()
-{
-    Super::OnRep_PlayerState();
-
 }
 
 void APC_TinyTanks::Destroyed()
@@ -128,7 +116,7 @@ void APC_TinyTanks::OnPlayerJoined()
 {
 }
 
-void APC_TinyTanks::ScoreboradInitialization()
+void APC_TinyTanks::ScoreboardInitialization()
 {
     if (GetNetMode() == ENetMode::NM_Client || GetNetMode() == ENetMode::NM_ListenServer)
     {

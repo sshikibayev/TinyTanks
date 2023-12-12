@@ -35,11 +35,9 @@ public:
 
 protected:
     virtual void BeginPlay();
-    virtual void Tick(float DeltaSeconds) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     virtual void SetupInputComponent() override;
-    virtual void OnRep_PlayerState() override;
     virtual void Destroyed() override;
 
     void OnInputStarted();
@@ -70,13 +68,13 @@ private:
     UPROPERTY(EditAnywhere, Category = Widget)
     TSubclassOf<UW_Scoreboard> ScoreboardClass;
     TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
-    TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
-    TObjectPtr<APS_TinyTank> PS_TinyTank;
 
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
 
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
+    TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
+    TObjectPtr<APS_TinyTank> PS_TinyTank;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     int FireCount{ 0 };
@@ -97,7 +95,7 @@ private:
     void UnbindFromAPostLogin();
     void UpdatePlayerStateDataOnAServer();
     void SetupInputMode();
-    void ScoreboradInitialization();
+    void ScoreboardInitialization();
     void MakeContinuesMovement();
     void OneTouchAction();
     void PrepareInputSubsystem();
