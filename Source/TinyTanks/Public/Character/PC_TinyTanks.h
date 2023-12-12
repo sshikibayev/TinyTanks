@@ -16,7 +16,7 @@ class UW_Scoreboard;
 class AGM_TinyTanks;
 class APS_TinyTank;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnScoreUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWidgetUpdated);
 
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
@@ -25,7 +25,7 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 
 public:
     UPROPERTY(Replicated)
-    FOnScoreUpdated OnScoreUpdated;
+    FOnWidgetUpdated OnWidgetUpdate;
 
     APC_TinyTanks();
 
@@ -85,14 +85,8 @@ private:
     void ServerNavigationMove(const FVector& TargetDestionation);
     UFUNCTION(Server, Reliable)
     void ServerStopMovement();
-
     UFUNCTION(Server, Reliable)
-    void ServerSendValueToServer(FName PlayerNickname);
-    UFUNCTION(NetMulticast, Reliable)
-    void MulticastReplicateValue(FName PlayerNickname);
-
-    UFUNCTION()
-    void UpdateWidgets();
+    void ServerSendNameToServer(FName PlayerNickname);
 
     void UpdatePlayerStateDataOnAServer();
     void SetupInputMode();

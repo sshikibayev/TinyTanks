@@ -8,7 +8,6 @@
 #include "PS_TinyTank.generated.h"
 
 class UW_PlayerData;
-class UW_Scoreboard;
 class APlayerController;
 
 UCLASS()
@@ -45,8 +44,6 @@ private:
     UPROPERTY(ReplicatedUsing = UpdateName)
     FText PlayerName{ FText::FromString(TEXT("Player name")) };
 
-    UFUNCTION(Client, Reliable)
-    void ClientUpdateNicknames();
     UFUNCTION()
     void WidgetDataUpdate();
     UFUNCTION()
