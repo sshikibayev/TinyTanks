@@ -8,6 +8,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Camera/CameraShakeBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Character/GM_TinyTanks.h"
 
 
 ATinyTankProjectile::ATinyTankProjectile()
@@ -31,9 +32,10 @@ void ATinyTankProjectile::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (GetLocalRole() == ROLE_Authority)
+    if (HasAuthority())
     {
         Mesh->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+        GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));
     }
 
     PlaySound(LaunchSound);
@@ -44,6 +46,14 @@ void ATinyTankProjectile::Destroyed()
     ShowDeathEffects();
 
     Super::Destroyed();
+}
+
+void ATinyTankProjectile::AddScoreForKilling(const TObjectPtr<AActor> Killer)
+{
+    if (GetOwner()->HasAuthority() && GM_TinyTanks)
+    {
+        GM_TinyTanks->ActorScored(Killer);
+    }
 }
 
 void ATinyTankProjectile::ShowDeathEffects()
@@ -75,7 +85,7 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
         TObjectPtr<AController> MyOwnerInstigator{ MyOwner->GetInstigatorController() };
         auto DamageTypeClass = UDamageType::StaticClass();
 
-        if (OtherActor && OtherActor != this && OtherActor != MyOwner)
+        if (OtherActor && OtherActor != this && OtherActor != MyOwner && OtherActor->Tags.Contains(TinyTankTag))
         {
             UGameplayStatics::ApplyDamage
             (
@@ -85,6 +95,9 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 this,
                 DamageTypeClass
             );
+
+
+            AddScoreForKilling(GetOwner());
         }
     }
 

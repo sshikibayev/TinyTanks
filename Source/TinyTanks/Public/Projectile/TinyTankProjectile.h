@@ -12,6 +12,7 @@ class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
 class UParticleSystemComponent;
+class AGM_TinyTanks;
 
 UCLASS()
 class TINYTANKS_API ATinyTankProjectile : public AActor
@@ -45,11 +46,13 @@ protected:
 private:
     const float InitialSpeed{ 1000.0f };
     const float MaxSpeed{ 3000.0f };
-
-    void PlaySound(TObjectPtr<USoundBase> SoundToPlay);
+    const FName TinyTankTag{ "TinyTank" };
+    TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
 
     UFUNCTION()
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
+    void AddScoreForKilling(const TObjectPtr<AActor> Killer);
     void ShowDeathEffects();
+    void PlaySound(TObjectPtr<USoundBase> SoundToPlay);
 };

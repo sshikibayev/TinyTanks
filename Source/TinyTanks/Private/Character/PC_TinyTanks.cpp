@@ -13,6 +13,12 @@
 #include "Kismet/GamePlayStatics.h"
 #include "Projectile/TinyTankProjectile.h"
 #include "Character/TinyTankCharacter.h"
+#include "Character/GM_TinyTanks.h"
+#include "Character/PS_TinyTank.h"
+#include "Widgets/Scoreboard/W_Scoreboard.h"
+#include "Widgets/Scoreboard/W_PlayerData.h"
+#include "GameFramework/GameStateBase.h"
+#include "Net/UnrealNetwork.h"
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -23,6 +29,8 @@ APC_TinyTanks::APC_TinyTanks()
     DefaultMouseCursor = EMouseCursor::Default;
     CachedDestination = FVector::ZeroVector;
     FollowTime = 0.f;
+
+    BindToAPostLogin();
 }
 
 void APC_TinyTanks::BeginPlay()
@@ -30,6 +38,71 @@ void APC_TinyTanks::BeginPlay()
     Super::BeginPlay();
 
     SetupInputMode();
+
+    UpdatePlayerStateDataOnAServer();
+
+    ScoreboradInitialization();
+}
+
+void APC_TinyTanks::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+}
+
+void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+void APC_TinyTanks::OnRep_PlayerState()
+{
+    Super::OnRep_PlayerState();
+
+}
+
+void APC_TinyTanks::Destroyed()
+{
+    UnbindFromAPostLogin();
+
+    Super::Destroyed();
+}
+
+void APC_TinyTanks::BindToAPostLogin()
+{
+    if (HasAuthority())
+    {
+        GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));
+        if (GM_TinyTanks)
+        {
+            GM_TinyTanks->OnPlayerJoin.AddDynamic(this, &ThisClass::OnPlayerJoined);
+        }
+    }
+}
+
+void APC_TinyTanks::UnbindFromAPostLogin()
+{
+    if (HasAuthority())
+    {
+        GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));
+        if (GM_TinyTanks)
+        {
+            GM_TinyTanks->OnPlayerJoin.RemoveDynamic(this, &ThisClass::OnPlayerJoined);
+        }
+    }
+}
+
+void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
+{
+    if (HasAuthority())
+    {
+        //Here is Player state for client is updated, and we are overriding the data of PS on a server.
+        PS_TinyTank = Cast<APS_TinyTank>(PlayerState);
+        if (PS_TinyTank)
+        {
+            PS_TinyTank->SetPlayerName(FText::FromString(PS_TinyTank->GetName()));
+            PS_TinyTank->SetPlayerScore(FMath::RandRange(1, 100));
+        }
+    }
 }
 
 void APC_TinyTanks::SetupInputMode()
@@ -40,13 +113,36 @@ void APC_TinyTanks::SetupInputMode()
     SetInputMode(InputMode);
 }
 
+void APC_TinyTanks::OnPlayerJoined()
+{
+}
+
+void APC_TinyTanks::ScoreboradInitialization()
+{
+    if (GetNetMode() == ENetMode::NM_Client || GetNetMode() == ENetMode::NM_ListenServer)
+    {
+        if (WBP_Scoreboard = CreateWidget<UW_Scoreboard>(GetWorld(), ScoreboardClass))
+        {
+            WBP_Scoreboard->AddToViewport();
+        }
+    }
+}
+
 void APC_TinyTanks::StopAllMovements()
 {
     StopMovement();
-    Server_StopMovement();
+    ServerStopMovement();
 }
 
-void APC_TinyTanks::Server_StopMovement_Implementation()
+void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
+{
+    if (WBP_Scoreboard)
+    {
+        WBP_Scoreboard->AddWidget(Widget);
+    }
+}
+
+void APC_TinyTanks::ServerStopMovement_Implementation()
 {
     StopMovement();
 }
@@ -98,7 +194,7 @@ void APC_TinyTanks::BindInputActions()
 void APC_TinyTanks::OnInputStarted()
 {
     StopMovement();
-    Server_StopMovement();
+    ServerStopMovement();
 }
 
 void APC_TinyTanks::OnSetDestinationTriggered()
@@ -137,11 +233,11 @@ void APC_TinyTanks::OneTouchAction()
         UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
-        Server_NavigationMove(CachedDestination);
+        ServerNavigationMove(CachedDestination);
     }
 }
 
-void APC_TinyTanks::Server_NavigationMove_Implementation(const FVector& TargetDestination)
+void APC_TinyTanks::ServerNavigationMove_Implementation(const FVector& TargetDestination)
 {
     UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestination);
 }
@@ -152,11 +248,11 @@ void APC_TinyTanks::OnFirePressed()
     {
         bFiringWeapon = true;
         GetWorld()->GetTimerManager().SetTimer(FiringTimer, this, &ThisClass::StopFire, FireRate, false);
-        Server_HandleFire();
+        ServerHandleFire();
     }
 }
 
-void APC_TinyTanks::Server_HandleFire_Implementation()
+void APC_TinyTanks::ServerHandleFire_Implementation()
 {
     FActorSpawnParameters SpawnParameters;
     SpawnParameters.Instigator = GetInstigator();

@@ -11,6 +11,10 @@ class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 class UEnhancedInputLocalPlayerSubsystem;
+class UW_PlayerData;
+class UW_Scoreboard;
+class AGM_TinyTanks;
+class APS_TinyTank;
 
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
@@ -21,8 +25,29 @@ public:
     APC_TinyTanks();
     void StopAllMovements();
 
+    void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
+
+protected:
+    virtual void BeginPlay();
+    virtual void Tick(float DeltaSeconds) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    virtual void SetupInputComponent() override;
+    virtual void OnRep_PlayerState() override;
+    virtual void Destroyed() override;
+
+    void OnInputStarted();
+    void OnSetDestinationTriggered();
+    void OnSetDestinationReleased();
+
+    UFUNCTION()
+    void OnFirePressed();
+    UFUNCTION()
+    void StopFire();
+
+private:
     UPROPERTY(EditAnywhere, Category = Input)
-    float ShortPressThreshold{ 3.0f };
+    float ShortPressThreshold{ 0.3f };
 
     UPROPERTY(EditAnywhere, Category = Input)
     TObjectPtr<UNiagaraSystem> FXCursor;
@@ -36,20 +61,15 @@ public:
     UPROPERTY(EditAnywhere, Category = Input)
     TSoftObjectPtr<UInputAction> IA_Fire;
 
-protected:
-    virtual void BeginPlay();
-    virtual void SetupInputComponent() override;
+    UPROPERTY(EditAnywhere, Category = Widget)
+    TSubclassOf<UW_Scoreboard> ScoreboardClass;
+    TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
+    TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
+    TObjectPtr<APS_TinyTank> PS_TinyTank;
 
-    void OnInputStarted();
-    void OnSetDestinationTriggered();
-    void OnSetDestinationReleased();
+    UPROPERTY(EditAnywhere, Category = Combat)
+    float FireRate{ 0.25f };
 
-    UFUNCTION()
-    void OnFirePressed();
-    UFUNCTION()
-    void StopFire();
-
-private:
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
@@ -57,17 +77,21 @@ private:
     bool bFiringWeapon{ false };
     FTimerHandle FiringTimer;
 
-    UPROPERTY(EditAnywhere, Category = "Combat")
-    float FireRate{ 0.25f };
+    UFUNCTION(Server, Reliable)
+    void ServerHandleFire();
+    UFUNCTION(Server, Reliable)
+    void ServerNavigationMove(const FVector& TargetDestionation);
+    UFUNCTION(Server, Reliable)
+    void ServerStopMovement();
 
-    UFUNCTION(Server, Reliable)
-    void Server_HandleFire();
-    UFUNCTION(Server, Reliable)
-    void Server_NavigationMove(const FVector& TargetDestionation);
-    UFUNCTION(Server, Reliable)
-    void Server_StopMovement();
+    UFUNCTION()
+    void OnPlayerJoined();
 
+    void BindToAPostLogin();
+    void UnbindFromAPostLogin();
+    void UpdatePlayerStateDataOnAServer();
     void SetupInputMode();
+    void ScoreboradInitialization();
     void MakeContinuesMovement();
     void OneTouchAction();
     void PrepareInputSubsystem();

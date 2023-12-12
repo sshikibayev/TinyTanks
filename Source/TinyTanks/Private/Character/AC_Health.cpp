@@ -18,7 +18,7 @@ void UAC_Health::BeginPlay()
 
     Health = MaxHealth;
 
-    if (GetOwner()->GetLocalRole() == ROLE_Authority)
+    if (GetOwner()->HasAuthority())
     {
         GetOwner()->OnTakeAnyDamage.AddDynamic(this, &ThisClass::DamageTaken);
         GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this));

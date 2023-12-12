@@ -9,13 +9,23 @@
 class ATinyTankCharacter;
 class APC_TinyTanks;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerJoin);
+
 UCLASS()
 class TINYTANKS_API AGM_TinyTanks : public AGameMode
 {
 	GENERATED_BODY()
 
 public:
+    UPROPERTY(Replicated)
+    FOnPlayerJoin OnPlayerJoin;
+
+    virtual void PostLogin(APlayerController* NewPlayer) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
     void ActorDied(TObjectPtr<AActor> DeadActor);
+    void ActorScored(TObjectPtr<AActor> ScoredActor);
+
     FTransform GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter> TinyTankCharacter);
 
 private:
