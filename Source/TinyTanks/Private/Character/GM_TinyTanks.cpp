@@ -8,25 +8,7 @@
 #include "Widgets/Scoreboard/W_PlayerData.h"
 #include "Widgets/Scoreboard/W_Scoreboard.h"
 #include "GameFramework/GameStateBase.h"
-#include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
-
-void AGM_TinyTanks::PostLogin(APlayerController* NewPlayer)
-{
-    Super::PostLogin(NewPlayer);
-
-    if (TObjectPtr<APC_TinyTanks> PC_TinyTank{ Cast<APC_TinyTanks>(NewPlayer) })
-    {
-        OnPlayerJoin.Broadcast();
-    }
-}
-
-void AGM_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    DOREPLIFETIME(ThisClass, OnPlayerJoin);
-}
 
 void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
 {
@@ -34,10 +16,7 @@ void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
     {
         if (TinyTank = Cast<ATinyTankCharacter>(DeadActor))
         {
-            if (PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController()))
-            {
-                PC_TinyTanks->StopAllMovements();
-            }
+            ForceMovementStop();
 
             TinyTank->HandleDestruction();
             FTransform ValidSpawnPoint{ GetValidSpawnPoint(TinyTank) };
@@ -90,6 +69,14 @@ FTransform AGM_TinyTanks::GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter
     CountTries = 0;
 
     return CurrentSpawnPoint;
+}
+
+void AGM_TinyTanks::ForceMovementStop()
+{
+    if (PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController()))
+    {
+        PC_TinyTanks->StopAllMovements();
+    }
 }
 
 bool AGM_TinyTanks::GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult)

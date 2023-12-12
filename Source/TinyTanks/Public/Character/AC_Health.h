@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+
 #include "AC_Health.generated.h"
 
 class AGM_TinyTanks;
@@ -18,6 +19,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+    virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 private:
     UPROPERTY(EditAnywhere);

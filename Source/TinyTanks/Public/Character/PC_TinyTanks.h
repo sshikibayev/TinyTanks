@@ -15,6 +15,7 @@ class UW_PlayerData;
 class UW_Scoreboard;
 class AGM_TinyTanks;
 class APS_TinyTank;
+class UGI_TinyTanks;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWidgetUpdated);
 
@@ -73,6 +74,7 @@ private:
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
     TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
     TObjectPtr<APS_TinyTank> PS_TinyTank;
+    TObjectPtr<UGI_TinyTanks> GameInstance;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     int FireCount{ 0 };
@@ -86,8 +88,9 @@ private:
     UFUNCTION(Server, Reliable)
     void ServerStopMovement();
     UFUNCTION(Server, Reliable)
-    void ServerSendNameToServer(FName PlayerNickname);
+    void ServerSendNameToServer(const FName& PlayerNickname);
 
+    void InitializePlayerName(const FName& PlayerNickname);
     void UpdatePlayerStateDataOnAServer();
     void SetupInputMode();
     void ScoreboardInitialization();

@@ -25,6 +25,16 @@ void UAC_Health::BeginPlay()
     }
 }
 
+void UAC_Health::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+    if (GetOwner()->HasAuthority())
+    {
+        GetOwner()->OnTakeAnyDamage.RemoveDynamic(this, &ThisClass::DamageTaken);
+    }
+
+    Super::OnComponentDestroyed(bDestroyingHierarchy);
+}
+
 void UAC_Health::DamageTaken(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* Instigator, AActor* DamageCauser)
 {
     if (Damage > 0.0f)

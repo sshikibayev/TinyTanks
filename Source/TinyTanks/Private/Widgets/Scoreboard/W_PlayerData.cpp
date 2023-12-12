@@ -30,9 +30,3 @@ void UW_PlayerData::NativeConstruct()
     SetPlayerName(Name);
     SetPlayerScore(Score);
 }
-
-void UW_PlayerData::NativeDestruct()
-{
-    Super::NativeDestruct();
-
-}

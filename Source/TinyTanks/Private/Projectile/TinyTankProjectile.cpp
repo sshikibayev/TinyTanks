@@ -45,6 +45,11 @@ void ATinyTankProjectile::Destroyed()
 {
     ShowDeathEffects();
 
+    if (HasAuthority() && Mesh)
+    {
+        Mesh->OnComponentHit.RemoveDynamic(this, &ThisClass::OnHit);
+    }
+
     Super::Destroyed();
 }
 
@@ -95,7 +100,6 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 this,
                 DamageTypeClass
             );
-
 
             AddScoreForKilling(GetOwner());
         }

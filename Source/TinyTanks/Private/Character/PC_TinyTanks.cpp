@@ -20,7 +20,6 @@
 #include "Character/GI_TinyTanks.h"
 #include "Net/UnrealNetwork.h"
 
-
 APC_TinyTanks::APC_TinyTanks()
 {
     bShowMouseCursor = true;
@@ -60,22 +59,16 @@ void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
     if (HasAuthority())
     {
         PS_TinyTank = Cast<APS_TinyTank>(PlayerState);
-        if (PS_TinyTank)
+        GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+        if (PS_TinyTank && GameInstance)
         {
-             TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(UGameplayStatics::GetGameInstance(this));
-             TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(UGameplayStatics::GetPlayerState(this, 0));
-             if (GameInstance && PlayerStateLocal)
-             {
-                 PlayerStateLocal->SetPlayerName(FText::FromString(GameInstance->GetPlayerNickname().ToString()));
-             }
-
+            InitializePlayerName(FName(GameInstance->GetPlayerNickname().ToString()));
             PS_TinyTank->SetPlayerScore(0);
-            OnWidgetUpdate.Broadcast();
         }
     }
     else
     {
-        TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+        GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
         if (GameInstance)
         {
             ServerSendNameToServer(GameInstance->GetPlayerNickname());
@@ -83,16 +76,19 @@ void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
     }
 }
 
-void APC_TinyTanks::ServerSendNameToServer_Implementation(FName PlayerNickname)
+void APC_TinyTanks::ServerSendNameToServer_Implementation(const FName& PlayerNickname)
 {
-    TObjectPtr<UGI_TinyTanks> GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+    InitializePlayerName(PlayerNickname);
+}
+
+void APC_TinyTanks::InitializePlayerName(const FName& PlayerNickname)
+{
     TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(PlayerState);
-    if (PlayerStateLocal && GameInstance)
+    if (GameInstance && PlayerStateLocal)
     {
         PlayerStateLocal->SetPlayerName(FText::FromString(PlayerNickname.ToString()));
+        OnWidgetUpdate.Broadcast();
     }
-
-    OnWidgetUpdate.Broadcast();
 }
 
 void APC_TinyTanks::UpdatePlayerScoreOnAServer(const int NewScore)

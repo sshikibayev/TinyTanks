@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+
 #include "W_PlayerData.generated.h"
 
 class UTextBlock;
@@ -28,7 +29,6 @@ public:
 
 protected:
     virtual void NativeConstruct() override;
-    virtual void NativeDestruct() override;
 
 private:
     UPROPERTY(meta = (BindWidget))
