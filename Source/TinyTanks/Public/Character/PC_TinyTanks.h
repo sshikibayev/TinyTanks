@@ -16,16 +16,22 @@ class UW_Scoreboard;
 class AGM_TinyTanks;
 class APS_TinyTank;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnScoreUpdated);
+
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
 {
     GENERATED_BODY()
 
 public:
-    APC_TinyTanks();
-    void StopAllMovements();
+    UPROPERTY(Replicated)
+    FOnScoreUpdated OnScoreUpdated;
 
+    APC_TinyTanks();
+
+    void StopAllMovements();
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
+    void UpdatePlayerScoreOnAServer(const int NewScore);
 
 protected:
     virtual void BeginPlay();

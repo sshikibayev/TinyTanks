@@ -52,6 +52,8 @@ void APC_TinyTanks::Tick(float DeltaSeconds)
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ThisClass, OnScoreUpdated);
 }
 
 void APC_TinyTanks::OnRep_PlayerState()
@@ -79,6 +81,37 @@ void APC_TinyTanks::BindToAPostLogin()
     }
 }
 
+void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
+{
+    if (WBP_Scoreboard)
+    {
+        WBP_Scoreboard->AddWidget(Widget);
+    }
+}
+
+void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
+{
+    if (HasAuthority())
+    {
+        PS_TinyTank = Cast<APS_TinyTank>(PlayerState);
+        if (PS_TinyTank)
+        {
+            PS_TinyTank->SetPlayerName(FText::FromString(PS_TinyTank->GetName()));
+            PS_TinyTank->SetPlayerScore(0);
+            OnScoreUpdated.Broadcast();
+        }
+    }
+}
+
+void APC_TinyTanks::UpdatePlayerScoreOnAServer(const int NewScore)
+{
+    if (HasAuthority() && PS_TinyTank)
+    {
+        PS_TinyTank->SetPlayerScore(PS_TinyTank->GetPlayerScore() + NewScore);
+        OnScoreUpdated.Broadcast();
+    }
+}
+
 void APC_TinyTanks::UnbindFromAPostLogin()
 {
     if (HasAuthority())
@@ -89,28 +122,6 @@ void APC_TinyTanks::UnbindFromAPostLogin()
             GM_TinyTanks->OnPlayerJoin.RemoveDynamic(this, &ThisClass::OnPlayerJoined);
         }
     }
-}
-
-void APC_TinyTanks::UpdatePlayerStateDataOnAServer()
-{
-    if (HasAuthority())
-    {
-        //Here is Player state for client is updated, and we are overriding the data of PS on a server.
-        PS_TinyTank = Cast<APS_TinyTank>(PlayerState);
-        if (PS_TinyTank)
-        {
-            PS_TinyTank->SetPlayerName(FText::FromString(PS_TinyTank->GetName()));
-            PS_TinyTank->SetPlayerScore(FMath::RandRange(1, 100));
-        }
-    }
-}
-
-void APC_TinyTanks::SetupInputMode()
-{
-    FInputModeGameAndUI InputMode;
-    InputMode.SetHideCursorDuringCapture(false);
-    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
-    SetInputMode(InputMode);
 }
 
 void APC_TinyTanks::OnPlayerJoined()
@@ -128,18 +139,18 @@ void APC_TinyTanks::ScoreboradInitialization()
     }
 }
 
+void APC_TinyTanks::SetupInputMode()
+{
+    FInputModeGameAndUI InputMode;
+    InputMode.SetHideCursorDuringCapture(false);
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
+    SetInputMode(InputMode);
+}
+
 void APC_TinyTanks::StopAllMovements()
 {
     StopMovement();
     ServerStopMovement();
-}
-
-void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
-{
-    if (WBP_Scoreboard)
-    {
-        WBP_Scoreboard->AddWidget(Widget);
-    }
 }
 
 void APC_TinyTanks::ServerStopMovement_Implementation()

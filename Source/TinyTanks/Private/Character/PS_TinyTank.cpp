@@ -21,7 +21,10 @@ void APS_TinyTank::BeginPlay()
 
         Cast<APC_TinyTanks>(UGameplayStatics::GetPlayerController(this, 0))->AddToScoreboard(WBP_PlayerData);
 
-        GetWorldTimerManager().SetTimer(TestTimer, this, &ThisClass::WidgetDataUpdate, 2.0f, true);
+        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
+        {
+            PC_TinyTank->OnScoreUpdated.AddDynamic(this, &ThisClass::WidgetDataUpdate);
+        }
     }
 }
 
@@ -51,14 +54,15 @@ void APS_TinyTank::SetPlayerData(const TObjectPtr<UW_PlayerData> NewPlayerData)
     }
 }
 
+void APS_TinyTank::UpdateScore()
+{
+    WidgetDataUpdate();
+}
+
 void APS_TinyTank::WidgetDataUpdate()
 {
-    if (UGameplayStatics::GetPlayerController(this, 0)->GetNetMode() == ENetMode::NM_Client || UGameplayStatics::GetPlayerController(this, 0)->GetNetMode() == ENetMode::NM_ListenServer)
+    if (WBP_PlayerData)
     {
-        if (WBP_PlayerData)
-        {
-            WBP_PlayerData->SetPlayerName(PlayerName);
-            WBP_PlayerData->SetPlayerScore(PlayerScore);
-        }
+        WBP_PlayerData->SetPlayerScore(PlayerScore);
     }
 }

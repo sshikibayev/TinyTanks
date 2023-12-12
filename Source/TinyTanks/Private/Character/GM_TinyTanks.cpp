@@ -48,16 +48,11 @@ void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
 
 void AGM_TinyTanks::ActorScored(TObjectPtr<AActor> ScoredActor)
 {
-    /*TObjectPtr<APC_TinyTanks> PC_TinyTankScored = Cast<APC_TinyTanks>(ScoredActor);
+    TObjectPtr<APC_TinyTanks> PC_TinyTankScored = Cast<APC_TinyTanks>(ScoredActor);
     if (PC_TinyTankScored)
     {
-        TObjectPtr<APS_TinyTank> PS_TinyTankScored = Cast<APS_TinyTank>(PC_TinyTankScored->GetPawn()->GetPlayerState());
-        if (PS_TinyTankScored)
-        {
-            PS_TinyTankScored->SetPlayerScore(PS_TinyTankScored->GetPlayerScore() + 1);
-        }
-        PC_TinyTankScored->OnScoreboardUpdate();
-    }*/
+        PC_TinyTankScored->UpdatePlayerScoreOnAServer(PointsForKilling);
+    }
 }
 
 FTransform AGM_TinyTanks::GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter> TinyTankCharacter)

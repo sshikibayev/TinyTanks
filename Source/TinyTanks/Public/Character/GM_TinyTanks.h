@@ -32,6 +32,7 @@ private:
     TObjectPtr<ATinyTankCharacter> TinyTank;
     TObjectPtr<APC_TinyTanks> PC_TinyTanks;
     FName TinyTankTag{ "TinyTank" };
+    int PointsForKilling{ 1 };
 
     bool GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult);
     void RespawnPlayer(const FTransform& SpawnPoint);

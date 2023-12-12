@@ -46,7 +46,7 @@ private:
 
     FTimerHandle TestTimer;
 
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing = UpdateScore)
     int PlayerScore{ 0 };
     UPROPERTY(Replicated)
     FText PlayerName{ FText::FromString(TEXT("Player name")) };
@@ -54,5 +54,7 @@ private:
     TObjectPtr<UW_PlayerData> WBP_PlayerData;
 
     UFUNCTION()
-    void WidgetDataUpdate() ;
+    void WidgetDataUpdate();
+    UFUNCTION()
+    void UpdateScore();
 };
