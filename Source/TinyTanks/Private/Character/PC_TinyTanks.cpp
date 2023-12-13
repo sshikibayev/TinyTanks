@@ -217,12 +217,6 @@ void APC_TinyTanks::ServerNavigationMove_Implementation(const FVector& TargetDes
 
 void APC_TinyTanks::OnFirePressed()
 {
-    TObjectPtr<APS_TinyTank> NewPlayerStateLocal = Cast<APS_TinyTank>(PlayerState);
-    if (NewPlayerStateLocal)
-    {
-        //NewPlayerStateLocal->Test_CreateWidget();
-    }
-
     if (!bFiringWeapon)
     {
         bFiringWeapon = true;

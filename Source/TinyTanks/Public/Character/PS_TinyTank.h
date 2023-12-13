@@ -33,8 +33,6 @@ public:
     void SetPlayerKillingScore(const int NewScore);
     void SetPlayerNickname(const FText& NewName);
 
-    void Test_CreateWidget();
-
 private:
     UPROPERTY(EditAnywhere, Category = Widget)
     TSubclassOf<UW_PlayerData> PlayerDataClass;

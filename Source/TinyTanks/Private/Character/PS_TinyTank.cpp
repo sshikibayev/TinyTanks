@@ -68,15 +68,6 @@ void APS_TinyTank::SetPlayerNickname(const FText& NewName)
     WidgetDataUpdate();
 }
 
-void APS_TinyTank::Test_CreateWidget()
-{
-    WBP_PlayerData = CreateWidget<UW_PlayerData>(GetWorld(), PlayerDataClass);
-    WBP_PlayerData->SetPlayerName(FText::FromString(TEXT("NEWPLAYER")));
-    WBP_PlayerData->SetPlayerScore(777);
-
-    Cast<APC_TinyTanks>(BasePlayerController)->AddToScoreboard(WBP_PlayerData);
-}
-
 void APS_TinyTank::OnRep_UpdateScore()
 {
     WidgetDataUpdate();
