@@ -59,11 +59,13 @@ void APS_TinyTank::InitializePlayerDataWidgetToScoreboard()
 void APS_TinyTank::SetPlayerKillingScore(const int NewScore)
 {
     PlayerKillingScore = NewScore;
+    WidgetDataUpdate();
 }
 
 void APS_TinyTank::SetPlayerNickname(const FText& NewName)
 {
     PlayerNickname = NewName;
+    WidgetDataUpdate();
 }
 
 void APS_TinyTank::Test_CreateWidget()
@@ -77,17 +79,10 @@ void APS_TinyTank::Test_CreateWidget()
 
 void APS_TinyTank::OnRep_UpdateScore()
 {
-    UE_LOG(LogTemp, Warning, TEXT("RS4/UpdateScore: %i"), PlayerKillingScore);
     WidgetDataUpdate();
 }
 
 void APS_TinyTank::OnRep_UpdateName()
-{
-    WidgetDataUpdate();
-    ServerWidgetUpdate();
-}
-
-void APS_TinyTank::ServerWidgetUpdate_Implementation()
 {
     WidgetDataUpdate();
 }

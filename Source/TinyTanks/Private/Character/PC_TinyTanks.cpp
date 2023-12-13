@@ -41,13 +41,10 @@ void APC_TinyTanks::BeginPlay()
 {
     Super::BeginPlay();
 
+    PS_TinyTank = GetPlayerState<APS_TinyTank>();
+    GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+
     SetupInputMode();
-}
-
-void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
 }
 
 void APC_TinyTanks::ScoreboardInitialization()
@@ -71,31 +68,18 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
 
 void APC_TinyTanks::UpdatePlayerStateData()
 {
-    if (GetNetMode() != ENetMode::NM_Client)
+    if (GetNetMode() != ENetMode::NM_Client && PS_TinyTank && GameInstance)
     {
-        PS_TinyTank = GetPlayerState<APS_TinyTank>();
-        GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
-
-        if (PS_TinyTank && GameInstance)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("RS3/server NickName: %s"), *GameInstance->GetPlayerNickname().ToString());
-
-            InitializePlayerName(FName(GameInstance->GetPlayerNickname().ToString()));
-            PS_TinyTank->SetPlayerKillingScore(0);
-        }
+        InitializePlayerName(FName(GameInstance->GetPlayerNickname().ToString()));
+        PS_TinyTank->SetPlayerKillingScore(0);
     }
-    else if(GetNetMode() == ENetMode::NM_Client)
+    else if(GetNetMode() == ENetMode::NM_Client && GameInstance)
     {
-        GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
-        if (GameInstance)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("RS3/client NickName: %s"), *GameInstance->GetPlayerNickname().ToString());
-            ServerSendNameToServer(GameInstance->GetPlayerNickname());
-        }
+        ServerSendNicknameFromClientToServer(GameInstance->GetPlayerNickname());
     }
 }
 
-void APC_TinyTanks::ServerSendNameToServer_Implementation(const FName& PlayerNickname)
+void APC_TinyTanks::ServerSendNicknameFromClientToServer_Implementation(const FName& PlayerNickname)
 {
     InitializePlayerName(PlayerNickname);
 }
@@ -106,13 +90,12 @@ void APC_TinyTanks::InitializePlayerName(const FName& PlayerNickname)
     if (GameInstance && PlayerStateLocal)
     {
         PlayerStateLocal->SetPlayerNickname(FText::FromString(PlayerNickname.ToString()));
-        //OnWidgetUpdate.Broadcast();
     }
 }
 
 void APC_TinyTanks::UpdatePlayerScoreOnAServer(const int NewScore)
 {
-    if (HasAuthority() && PS_TinyTank) //TODO change to netmode
+    if (HasAuthority() && PS_TinyTank)
     {
         PS_TinyTank->SetPlayerKillingScore(PS_TinyTank->GetPlayerKillScore() + NewScore);
     }
@@ -237,7 +220,7 @@ void APC_TinyTanks::OnFirePressed()
     TObjectPtr<APS_TinyTank> NewPlayerStateLocal = Cast<APS_TinyTank>(PlayerState);
     if (NewPlayerStateLocal)
     {
-        NewPlayerStateLocal->Test_CreateWidget();
+        //NewPlayerStateLocal->Test_CreateWidget();
     }
 
     if (!bFiringWeapon)

@@ -13,8 +13,8 @@
 
 ATinyTankProjectile::ATinyTankProjectile()
 {
-    PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
+    PrimaryActorTick.bCanEverTick = false;
 
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
     SetRootComponent(Mesh);

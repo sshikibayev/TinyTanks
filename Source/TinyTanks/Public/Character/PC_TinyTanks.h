@@ -33,7 +33,6 @@ public:
 protected:
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void SetupInputComponent() override;
 
     void OnInputStarted();
@@ -74,7 +73,6 @@ private:
     TObjectPtr<UGI_TinyTanks> GameInstance;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
-    int FireCount{ 0 };
     bool bFiringWeapon{ false };
     FTimerHandle FiringTimer;
 
@@ -85,7 +83,7 @@ private:
     UFUNCTION(Server, Reliable)
     void ServerStopMovement();
     UFUNCTION(Server, Reliable)
-    void ServerSendNameToServer(const FName& PlayerNickname);
+    void ServerSendNicknameFromClientToServer(const FName& PlayerNickname);
 
     void InitializePlayerName(const FName& PlayerNickname);
     void SetupInputMode();

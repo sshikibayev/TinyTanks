@@ -34,7 +34,6 @@ public:
     void SetPlayerNickname(const FText& NewName);
 
     void Test_CreateWidget();
-    void InitializePlayerDataWidgetToScoreboard();
 
 private:
     UPROPERTY(EditAnywhere, Category = Widget)
@@ -47,13 +46,12 @@ private:
     UPROPERTY(ReplicatedUsing = OnRep_UpdateName)
     FText PlayerNickname{ FText::FromString(TEXT("Player name")) };
 
-    UFUNCTION(Server, Reliable)
-    void ServerWidgetUpdate();
-
     UFUNCTION()
     void WidgetDataUpdate();
     UFUNCTION()
     void OnRep_UpdateScore();
     UFUNCTION()
     void OnRep_UpdateName();
+
+    void InitializePlayerDataWidgetToScoreboard();
 };
