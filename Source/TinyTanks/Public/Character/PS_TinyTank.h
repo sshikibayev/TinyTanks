@@ -20,18 +20,21 @@ public:
     virtual void Destroyed() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-    FORCEINLINE int GetPlayerScore() const
+    FORCEINLINE int GetPlayerKillScore() const
     {
-        return PlayerScore;
+        return PlayerKillingScore;
     }
 
-    FORCEINLINE FText GetPlayerName() const
+    FORCEINLINE FText GetPlayerNickname() const
     {
-        return PlayerName;
+        return PlayerNickname;
     }
 
-    void SetPlayerScore(const int NewScore);
-    void SetPlayerName(const FText& NewName);
+    void SetPlayerKillingScore(const int NewScore);
+    void SetPlayerNickname(const FText& NewName);
+
+    void Test_CreateWidget();
+    void InitializePlayerDataWidgetToScoreboard();
 
 private:
     UPROPERTY(EditAnywhere, Category = Widget)
@@ -39,15 +42,18 @@ private:
     TObjectPtr<UW_PlayerData> WBP_PlayerData;
     TObjectPtr<APlayerController> BasePlayerController;
 
-    UPROPERTY(ReplicatedUsing = UpdateScore)
-    int PlayerScore{ 0 };
-    UPROPERTY(ReplicatedUsing = UpdateName)
-    FText PlayerName{ FText::FromString(TEXT("Player name")) };
+    UPROPERTY(ReplicatedUsing = OnRep_UpdateScore)
+    int PlayerKillingScore{ 0 };
+    UPROPERTY(ReplicatedUsing = OnRep_UpdateName)
+    FText PlayerNickname{ FText::FromString(TEXT("Player name")) };
+
+    UFUNCTION(Server, Reliable)
+    void ServerWidgetUpdate();
 
     UFUNCTION()
     void WidgetDataUpdate();
     UFUNCTION()
-    void UpdateScore();
+    void OnRep_UpdateScore();
     UFUNCTION()
-    void UpdateName();
+    void OnRep_UpdateName();
 };

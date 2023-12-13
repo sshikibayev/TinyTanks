@@ -14,32 +14,11 @@ void APS_TinyTank::BeginPlay()
 {
     Super::BeginPlay();
 
-    BasePlayerController = UGameplayStatics::GetPlayerController(this, 0);
-    if (BasePlayerController && BasePlayerController->GetNetMode() == ENetMode::NM_Client || BasePlayerController->GetNetMode() == ENetMode::NM_ListenServer)
-    {
-        WBP_PlayerData = CreateWidget<UW_PlayerData>(GetWorld(), PlayerDataClass);
-        WBP_PlayerData->SetPlayerName(PlayerName);
-        WBP_PlayerData->SetPlayerScore(PlayerScore);
-
-        Cast<APC_TinyTanks>(BasePlayerController)->AddToScoreboard(WBP_PlayerData);
-
-        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
-        {
-            PC_TinyTank->OnWidgetUpdate.AddDynamic(this, &ThisClass::WidgetDataUpdate);
-        }
-    }
+    InitializePlayerDataWidgetToScoreboard();
 }
 
 void APS_TinyTank::Destroyed()
 {
-    if (BasePlayerController && BasePlayerController->GetNetMode() == ENetMode::NM_Client || BasePlayerController->GetNetMode() == ENetMode::NM_ListenServer)
-    {
-        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
-        {
-            PC_TinyTank->OnWidgetUpdate.RemoveDynamic(this, &ThisClass::WidgetDataUpdate);
-        }
-    }
-
     Super::Destroyed();
 }
 
@@ -47,35 +26,77 @@ void APS_TinyTank::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(ThisClass, PlayerScore);
-    DOREPLIFETIME(ThisClass, PlayerName);
+    DOREPLIFETIME(ThisClass, PlayerKillingScore);
+    DOREPLIFETIME(ThisClass, PlayerNickname);
 }
 
-void APS_TinyTank::SetPlayerScore(const int NewScore)
+void APS_TinyTank::InitializePlayerDataWidgetToScoreboard()
 {
-    PlayerScore = NewScore;
+    BasePlayerController = UGameplayStatics::GetPlayerController(this, 0);
+    if (BasePlayerController && BasePlayerController->GetNetMode() != ENetMode::NM_DedicatedServer)
+    {
+        WBP_PlayerData = CreateWidget<UW_PlayerData>(GetWorld(), PlayerDataClass);
+        WBP_PlayerData->SetPlayerName(PlayerNickname);
+        WBP_PlayerData->SetPlayerScore(PlayerKillingScore);
+
+        Cast<APC_TinyTanks>(BasePlayerController)->AddToScoreboard(WBP_PlayerData);
+
+        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
+        {
+            PC_TinyTank->UpdatePlayerStateData();
+            WidgetDataUpdate();
+        }
+    }
+    else if(GetPlayerController() && GetPlayerController()->GetNetMode() == ENetMode::NM_DedicatedServer)
+    {
+        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
+        {
+            PC_TinyTank->UpdatePlayerStateData();
+        }
+    }
 }
 
-void APS_TinyTank::SetPlayerName(const FText& NewName)
+void APS_TinyTank::SetPlayerKillingScore(const int NewScore)
 {
-    PlayerName = NewName;
+    PlayerKillingScore = NewScore;
+}
+
+void APS_TinyTank::SetPlayerNickname(const FText& NewName)
+{
+    PlayerNickname = NewName;
+}
+
+void APS_TinyTank::Test_CreateWidget()
+{
+    WBP_PlayerData = CreateWidget<UW_PlayerData>(GetWorld(), PlayerDataClass);
+    WBP_PlayerData->SetPlayerName(FText::FromString(TEXT("NEWPLAYER")));
+    WBP_PlayerData->SetPlayerScore(777);
+
+    Cast<APC_TinyTanks>(BasePlayerController)->AddToScoreboard(WBP_PlayerData);
+}
+
+void APS_TinyTank::OnRep_UpdateScore()
+{
+    UE_LOG(LogTemp, Warning, TEXT("RS4/UpdateScore: %i"), PlayerKillingScore);
+    WidgetDataUpdate();
+}
+
+void APS_TinyTank::OnRep_UpdateName()
+{
+    WidgetDataUpdate();
+    ServerWidgetUpdate();
+}
+
+void APS_TinyTank::ServerWidgetUpdate_Implementation()
+{
+    WidgetDataUpdate();
 }
 
 void APS_TinyTank::WidgetDataUpdate()
 {
     if (WBP_PlayerData)
     {
-        WBP_PlayerData->SetPlayerName(PlayerName);
-        WBP_PlayerData->SetPlayerScore(PlayerScore);
+        WBP_PlayerData->SetPlayerName(PlayerNickname);
+        WBP_PlayerData->SetPlayerScore(PlayerKillingScore);
     }
-}
-
-void APS_TinyTank::UpdateScore()
-{
-    WidgetDataUpdate();
-}
-
-void APS_TinyTank::UpdateName()
-{
-    WidgetDataUpdate();
 }

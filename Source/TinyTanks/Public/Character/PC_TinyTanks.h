@@ -17,25 +17,22 @@ class AGM_TinyTanks;
 class APS_TinyTank;
 class UGI_TinyTanks;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWidgetUpdated);
-
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
 {
     GENERATED_BODY()
 
 public:
-    UPROPERTY(Replicated)
-    FOnWidgetUpdated OnWidgetUpdate;
-
     APC_TinyTanks();
 
     void StopAllMovements();
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
+    void UpdatePlayerStateData();
     void UpdatePlayerScoreOnAServer(const int NewScore);
 
 protected:
-    virtual void BeginPlay();
+    virtual void PostInitializeComponents() override;
+    virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void SetupInputComponent() override;
 
@@ -91,7 +88,6 @@ private:
     void ServerSendNameToServer(const FName& PlayerNickname);
 
     void InitializePlayerName(const FName& PlayerNickname);
-    void UpdatePlayerStateDataOnAServer();
     void SetupInputMode();
     void ScoreboardInitialization();
     void MakeContinuesMovement();
