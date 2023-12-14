@@ -29,6 +29,9 @@ protected:
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
+    virtual void OnPossess(APawn* aPawn) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 
     void OnInputStarted();
     void OnSetDestinationTriggered();
@@ -62,11 +65,14 @@ private:
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
 
+    TObjectPtr<APawn> TinyTankPawn;
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
     FTimerHandle FiringTimer;
+    UPROPERTY(ReplicatedUsing = OnRep_OnPossessFinished)
+    bool bOnPossessFinished{ false };
 
     UFUNCTION(Server, Reliable)
     void ServerHandleFire();
@@ -74,11 +80,19 @@ private:
     void ServerNavigationMove(const FVector& TargetDestionation);
     UFUNCTION(Server, Reliable)
     void ServerStopMovement();
+    UFUNCTION(Client, Reliable)
+    void ClientStopMovement();
 
+    UFUNCTION()
+    void OnRep_OnPossessFinished();
+
+
+    void OnPossessInit();
     void SetupInputMode();
     void ScoreboardInitialization();
     void MakeContinuesMovement();
     void OneTouchAction();
+    void PathFindingRefresh();
     void PrepareInputSubsystem();
     void AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext);
     void BindInputActions();

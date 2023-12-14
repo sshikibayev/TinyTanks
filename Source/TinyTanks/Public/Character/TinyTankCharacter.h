@@ -76,7 +76,6 @@ private:
     FTransform RespawnPoint;
 
     void SetupMovementSettings();
-    void PathFindingRefresh();
     void DetachComponent();
     void ShowDeathEffects();
 };

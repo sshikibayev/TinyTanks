@@ -15,6 +15,7 @@
 #include "Widgets/Scoreboard/W_Scoreboard.h"
 #include "Widgets/Scoreboard/W_PlayerData.h"
 #include "Kismet/GamePlayStatics.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Net/UnrealNetwork.h"
 
 APC_TinyTanks::APC_TinyTanks()
@@ -41,6 +42,21 @@ void APC_TinyTanks::BeginPlay()
     SetupInputMode();
 }
 
+void APC_TinyTanks::OnPossess(APawn* aPawn)
+{
+    Super::OnPossess(aPawn);
+
+    OnPossessInit();
+    bOnPossessFinished = !bOnPossessFinished;
+}
+
+void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ThisClass, bOnPossessFinished);
+}
+
 void APC_TinyTanks::ScoreboardInitialization()
 {
     if (GetNetMode() != ENetMode::NM_DedicatedServer)
@@ -60,6 +76,18 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
     }
 }
 
+void APC_TinyTanks::OnRep_OnPossessFinished()
+{
+    OnPossessInit();
+}
+
+void APC_TinyTanks::OnPossessInit()
+{
+    TinyTankPawn = GetPawn();
+    StopMovement();
+    PathFindingRefresh();
+}
+
 void APC_TinyTanks::SetupInputMode()
 {
     FInputModeGameAndUI InputMode;
@@ -72,9 +100,15 @@ void APC_TinyTanks::StopAllMovements()
 {
     StopMovement();
     ServerStopMovement();
+    ClientStopMovement();
 }
 
 void APC_TinyTanks::ServerStopMovement_Implementation()
+{
+    StopMovement();
+}
+
+void APC_TinyTanks::ClientStopMovement_Implementation()
 {
     StopMovement();
 }
@@ -125,8 +159,7 @@ void APC_TinyTanks::BindInputActions()
 
 void APC_TinyTanks::OnInputStarted()
 {
-    StopMovement();
-    ServerStopMovement();
+    StopAllMovements();
 }
 
 void APC_TinyTanks::OnSetDestinationTriggered()
@@ -144,7 +177,6 @@ void APC_TinyTanks::OnSetDestinationTriggered()
 
 void APC_TinyTanks::MakeContinuesMovement()
 {
-    TObjectPtr<APawn> TinyTankPawn{ GetPawn() };
     if (TinyTankPawn)
     {
         FVector WorldDirection = (CachedDestination - TinyTankPawn->GetActorLocation()).GetSafeNormal();
@@ -162,16 +194,25 @@ void APC_TinyTanks::OneTouchAction()
 {
     if (FollowTime <= ShortPressThreshold)
     {
-        UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
+        UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
         ServerNavigationMove(CachedDestination);
     }
 }
 
 void APC_TinyTanks::ServerNavigationMove_Implementation(const FVector& TargetDestination)
 {
-    UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetPawn()->GetController(), TargetDestination);
+    UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
+}
+
+void APC_TinyTanks::PathFindingRefresh()
+{
+    TObjectPtr<UPathFollowingComponent> PathFollowingComp = FindComponentByClass<UPathFollowingComponent>();
+    if (PathFollowingComp)
+    {
+        PathFollowingComp->UpdateCachedComponents();
+    }
 }
 
 void APC_TinyTanks::OnFirePressed()

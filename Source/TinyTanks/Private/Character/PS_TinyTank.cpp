@@ -40,7 +40,10 @@ void APS_TinyTank::InitializePlayerDataWidgetToScoreboard()
         WBP_PlayerData->SetPlayerName(PlayerNickname);
         WBP_PlayerData->SetPlayerScore(PlayerKillingScore);
 
-        Cast<APC_TinyTanks>(BasePlayerController)->AddToScoreboard(WBP_PlayerData);
+        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(BasePlayerController) })
+        {
+            PC_TinyTank->AddToScoreboard(WBP_PlayerData);
+        }
 
         auto GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
         if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })

@@ -9,7 +9,6 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Navigation/PathFollowingComponent.h"
 
 ATinyTankCharacter::ATinyTankCharacter()
 {
@@ -54,11 +53,6 @@ void ATinyTankCharacter::BeginPlay()
         const FTransform SpawnPoint{ GM_TinyTanks->GetValidSpawnPoint(this) };
         SetActorTransform(SpawnPoint);
     }
-
-    if (!HasAuthority())
-    {
-        PathFindingRefresh();
-    }
 }
 
 void ATinyTankCharacter::Destroyed()
@@ -77,19 +71,6 @@ void ATinyTankCharacter::SetupMovementSettings()
     GetCharacterMovement()->bOrientRotationToMovement = true;
     GetCharacterMovement()->bConstrainToPlane = true;
     GetCharacterMovement()->bSnapToPlaneAtStart = true;
-}
-
-void ATinyTankCharacter::PathFindingRefresh()
-{
-    TObjectPtr<APC_TinyTanks> PC_TinyTank{ Cast<APC_TinyTanks>(GetController()) };
-    if (PC_TinyTank)
-    {
-        TObjectPtr<UPathFollowingComponent> PathFollowingComp = PC_TinyTank->FindComponentByClass<UPathFollowingComponent>();
-        if (PathFollowingComp)
-        {
-            PathFollowingComp->UpdateCachedComponents();
-        }
-    }
 }
 
 void ATinyTankCharacter::DetachComponent()

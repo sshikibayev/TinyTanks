@@ -18,7 +18,7 @@ class TINYTANKS_API APS_TinyTank : public APlayerState
 public:
     virtual void BeginPlay() override;
     virtual void Destroyed() override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     FORCEINLINE int GetPlayerKillScore() const
     {
