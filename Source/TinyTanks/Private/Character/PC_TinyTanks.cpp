@@ -34,15 +34,15 @@ void APC_TinyTanks::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
 
+    PS_TinyTank = GetPlayerState<APS_TinyTank>();
+    GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+
     ScoreboardInitialization();
 }
 
 void APC_TinyTanks::BeginPlay()
 {
     Super::BeginPlay();
-
-    PS_TinyTank = GetPlayerState<APS_TinyTank>();
-    GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
 
     SetupInputMode();
 }
@@ -86,10 +86,9 @@ void APC_TinyTanks::ServerSendNicknameFromClientToServer_Implementation(const FN
 
 void APC_TinyTanks::InitializePlayerName(const FName& PlayerNickname)
 {
-    TObjectPtr<APS_TinyTank> PlayerStateLocal = Cast<APS_TinyTank>(PlayerState);
-    if (GameInstance && PlayerStateLocal)
+    if (GameInstance && PS_TinyTank)
     {
-        PlayerStateLocal->SetPlayerNickname(FText::FromString(PlayerNickname.ToString()));
+        PS_TinyTank->SetPlayerNickname(FText::FromString(PlayerNickname.ToString()));
     }
 }
 

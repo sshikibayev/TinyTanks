@@ -44,7 +44,6 @@ void APS_TinyTank::InitializePlayerDataWidgetToScoreboard()
         if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
         {
             PC_TinyTank->UpdatePlayerStateData();
-            WidgetDataUpdate();
         }
     }
     else if(GetPlayerController() && GetPlayerController()->GetNetMode() == ENetMode::NM_DedicatedServer)
