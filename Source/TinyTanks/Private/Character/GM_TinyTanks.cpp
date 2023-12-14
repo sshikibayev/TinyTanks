@@ -5,10 +5,9 @@
 #include "Character/TinyTankCharacter.h"
 #include "Character/PC_TinyTanks.h"
 #include "Character/PS_TinyTank.h"
-#include "Widgets/Scoreboard/W_PlayerData.h"
-#include "Widgets/Scoreboard/W_Scoreboard.h"
 #include "GameFramework/GameStateBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
 
 void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
 {
@@ -27,10 +26,9 @@ void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
 
 void AGM_TinyTanks::ActorScored(TObjectPtr<AActor> ScoredActor)
 {
-    TObjectPtr<APC_TinyTanks> PC_TinyTankScored = Cast<APC_TinyTanks>(ScoredActor);
-    if (PC_TinyTankScored)
+    if (ScoredActor)
     {
-        PC_TinyTankScored->UpdatePlayerScoreOnAServer(PointsForKilling);
+        UpdateKillingScore(Cast<APC_TinyTanks>(ScoredActor));
     }
 }
 
@@ -76,6 +74,18 @@ void AGM_TinyTanks::ForceMovementStop()
     if (PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController()))
     {
         PC_TinyTanks->StopAllMovements();
+    }
+}
+
+void AGM_TinyTanks::UpdateKillingScore(const TObjectPtr<APC_TinyTanks> ScoreActorController)
+{
+    if (ScoreActorController)
+    {
+        TObjectPtr<APS_TinyTank> PS_TinyTankScored = Cast<APS_TinyTank>(ScoreActorController->PlayerState);
+        if (PS_TinyTankScored)
+        {
+            PS_TinyTankScored->SetPlayerKillingScore(PS_TinyTankScored->GetPlayerKillScore() + PointsForKilling);
+        }
     }
 }
 

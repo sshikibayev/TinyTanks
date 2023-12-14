@@ -8,6 +8,7 @@
 #include "Character/PC_TinyTanks.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "Character/GI_TinyTanks.h"
 #include "Net/UnrealNetwork.h"
 
 void APS_TinyTank::BeginPlay()
@@ -41,16 +42,27 @@ void APS_TinyTank::InitializePlayerDataWidgetToScoreboard()
 
         Cast<APC_TinyTanks>(BasePlayerController)->AddToScoreboard(WBP_PlayerData);
 
+        auto GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
         if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
         {
-            PC_TinyTank->UpdatePlayerStateData();
+            if (GetNetMode() != ENetMode::NM_Client && GameInstance)
+            {
+                SetPlayerNickname(FText::FromString(GameInstance->GetPlayerNickname().ToString()));
+                SetPlayerKillingScore(0);
+            }
+            else if (GetNetMode() == ENetMode::NM_Client && GameInstance)
+            {
+                ServerSendNicknameFromClientToServer(GameInstance->GetPlayerNickname());
+            }
         }
     }
     else if(GetPlayerController() && GetPlayerController()->GetNetMode() == ENetMode::NM_DedicatedServer)
     {
-        if (auto PC_TinyTank{ Cast<APC_TinyTanks>(GetPlayerController()) })
+        auto GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
+        if (GameInstance)
         {
-            PC_TinyTank->UpdatePlayerStateData();
+            SetPlayerNickname(FText::FromString(GameInstance->GetPlayerNickname().ToString()));
+            SetPlayerKillingScore(0);
         }
     }
 }
@@ -75,6 +87,11 @@ void APS_TinyTank::OnRep_UpdateScore()
 void APS_TinyTank::OnRep_UpdateName()
 {
     WidgetDataUpdate();
+}
+
+void APS_TinyTank::ServerSendNicknameFromClientToServer_Implementation(const FName& NewPlayerNickname)
+{
+    SetPlayerNickname(FText::FromString(NewPlayerNickname.ToString()));
 }
 
 void APS_TinyTank::WidgetDataUpdate()

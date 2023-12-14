@@ -13,9 +13,6 @@ class UInputAction;
 class UEnhancedInputLocalPlayerSubsystem;
 class UW_PlayerData;
 class UW_Scoreboard;
-class AGM_TinyTanks;
-class APS_TinyTank;
-class UGI_TinyTanks;
 
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
@@ -27,8 +24,6 @@ public:
 
     void StopAllMovements();
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
-    void UpdatePlayerStateData();
-    void UpdatePlayerScoreOnAServer(const int NewScore);
 
 protected:
     virtual void PostInitializeComponents() override;
@@ -68,9 +63,6 @@ private:
     float FireRate{ 0.25f };
 
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-    TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
-    TObjectPtr<APS_TinyTank> PS_TinyTank;
-    TObjectPtr<UGI_TinyTanks> GameInstance;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
@@ -82,10 +74,7 @@ private:
     void ServerNavigationMove(const FVector& TargetDestionation);
     UFUNCTION(Server, Reliable)
     void ServerStopMovement();
-    UFUNCTION(Server, Reliable)
-    void ServerSendNicknameFromClientToServer(const FName& PlayerNickname);
 
-    void InitializePlayerName(const FName& PlayerNickname);
     void SetupInputMode();
     void ScoreboardInitialization();
     void MakeContinuesMovement();

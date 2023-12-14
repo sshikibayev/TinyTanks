@@ -12,12 +12,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "Projectile/TinyTankProjectile.h"
 #include "Character/TinyTankCharacter.h"
-#include "Character/GM_TinyTanks.h"
-#include "Character/PS_TinyTank.h"
 #include "Widgets/Scoreboard/W_Scoreboard.h"
 #include "Widgets/Scoreboard/W_PlayerData.h"
 #include "Kismet/GamePlayStatics.h"
-#include "Character/GI_TinyTanks.h"
 #include "Net/UnrealNetwork.h"
 
 APC_TinyTanks::APC_TinyTanks()
@@ -33,9 +30,6 @@ APC_TinyTanks::APC_TinyTanks()
 void APC_TinyTanks::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
-
-    PS_TinyTank = GetPlayerState<APS_TinyTank>();
-    GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
 
     ScoreboardInitialization();
 }
@@ -63,40 +57,6 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
     if (WBP_Scoreboard)
     {
         WBP_Scoreboard->AddWidget(Widget);
-    }
-}
-
-void APC_TinyTanks::UpdatePlayerStateData()
-{
-    if (GetNetMode() != ENetMode::NM_Client && PS_TinyTank && GameInstance)
-    {
-        InitializePlayerName(FName(GameInstance->GetPlayerNickname().ToString()));
-        PS_TinyTank->SetPlayerKillingScore(0);
-    }
-    else if(GetNetMode() == ENetMode::NM_Client && GameInstance)
-    {
-        ServerSendNicknameFromClientToServer(GameInstance->GetPlayerNickname());
-    }
-}
-
-void APC_TinyTanks::ServerSendNicknameFromClientToServer_Implementation(const FName& PlayerNickname)
-{
-    InitializePlayerName(PlayerNickname);
-}
-
-void APC_TinyTanks::InitializePlayerName(const FName& PlayerNickname)
-{
-    if (GameInstance && PS_TinyTank)
-    {
-        PS_TinyTank->SetPlayerNickname(FText::FromString(PlayerNickname.ToString()));
-    }
-}
-
-void APC_TinyTanks::UpdatePlayerScoreOnAServer(const int NewScore)
-{
-    if (HasAuthority() && PS_TinyTank)
-    {
-        PS_TinyTank->SetPlayerKillingScore(PS_TinyTank->GetPlayerKillScore() + NewScore);
     }
 }
 

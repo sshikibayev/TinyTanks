@@ -44,6 +44,9 @@ private:
     UPROPERTY(ReplicatedUsing = OnRep_UpdateName)
     FText PlayerNickname{ FText::FromString(TEXT("Player name")) };
 
+    UFUNCTION(Server, Reliable)
+    void ServerSendNicknameFromClientToServer(const FName& NewPlayerNickname);
+
     UFUNCTION()
     void WidgetDataUpdate();
     UFUNCTION()

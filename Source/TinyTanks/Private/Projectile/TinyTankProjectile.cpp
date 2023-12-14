@@ -101,7 +101,7 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 DamageTypeClass
             );
 
-            AddScoreForKilling(GetOwner());
+            AddScoreForKilling(MyOwner);
         }
     }
 
