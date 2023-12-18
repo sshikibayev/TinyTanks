@@ -44,19 +44,30 @@ void APC_TinyTanks::BeginPlay()
     SetupInputMode();
 }
 
+void APC_TinyTanks::OnRep_Pawn()
+{
+    Super::OnRep_Pawn();
+
+    //Calls when a pawn is possessed;
+    TinyTankPawn = GetPawn();
+}
+
 void APC_TinyTanks::OnPossess(APawn* aPawn)
 {
     Super::OnPossess(aPawn);
 
-    OnPossessInit();
-    bOnPossessFinished = !bOnPossessFinished;
+    if (HasAuthority())
+    {
+        TinyTankPawn = aPawn;
+        StopMovement();
+        ClientStopMovement();
+        ClientRefeshPathfinding();
+    }
 }
 
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    DOREPLIFETIME(ThisClass, bOnPossessFinished);
 }
 
 void APC_TinyTanks::ScoreboardInitialization()
@@ -78,24 +89,12 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
     }
 }
 
-void APC_TinyTanks::OnRep_OnPossessFinished()
-{
-    OnPossessInit();
-}
-
 void APC_TinyTanks::SetColorID()
 {
     if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
     {
         ColorID = GM_TinyTanks->GetColorID();
     }
-}
-
-void APC_TinyTanks::OnPossessInit()
-{
-    TinyTankPawn = GetPawn();
-    StopMovement();
-    PathFindingRefresh();
 }
 
 void APC_TinyTanks::SetupInputMode()
@@ -106,11 +105,13 @@ void APC_TinyTanks::SetupInputMode()
     SetInputMode(InputMode);
 }
 
-void APC_TinyTanks::StopAllMovements()
+void APC_TinyTanks::HandleDestructionOfTheCharacter()
 {
-    StopMovement();
-    ServerStopMovement();
-    ClientStopMovement();
+    if (HasAuthority())
+    {
+        StopMovement();
+        ClientStopMovement();
+    }
 }
 
 void APC_TinyTanks::ServerStopMovement_Implementation()
@@ -121,6 +122,11 @@ void APC_TinyTanks::ServerStopMovement_Implementation()
 void APC_TinyTanks::ClientStopMovement_Implementation()
 {
     StopMovement();
+}
+
+void APC_TinyTanks::ClientRefeshPathfinding_Implementation()
+{
+    PathFindingRefresh();
 }
 
 void APC_TinyTanks::SetupInputComponent()
@@ -169,7 +175,8 @@ void APC_TinyTanks::BindInputActions()
 
 void APC_TinyTanks::OnInputStarted()
 {
-    StopAllMovements();
+    StopMovement();
+    ServerStopMovement();
 }
 
 void APC_TinyTanks::OnSetDestinationTriggered()

@@ -34,7 +34,6 @@ private:
 
     void MakeListOfColorsID();
     void UpdateKillingScore(const TObjectPtr<APC_TinyTanks> ScoreActorController);
-    void ForceMovementStop();
     bool GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult);
     void RespawnPlayer(const FTransform& SpawnPoint);
 };

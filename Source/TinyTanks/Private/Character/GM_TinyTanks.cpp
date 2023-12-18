@@ -31,8 +31,7 @@ void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
     {
         if (TinyTank = Cast<ATinyTankCharacter>(DeadActor))
         {
-            ForceMovementStop();
-
+            PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController());
             TinyTank->HandleDestruction();
             FTransform ValidSpawnPoint{ GetValidSpawnPoint(TinyTank) };
             RespawnPlayer(ValidSpawnPoint);
@@ -83,14 +82,6 @@ FTransform AGM_TinyTanks::GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter
     CountTries = 0;
 
     return CurrentSpawnPoint;
-}
-
-void AGM_TinyTanks::ForceMovementStop()
-{
-    if (PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController()))
-    {
-        PC_TinyTanks->StopAllMovements();
-    }
 }
 
 void AGM_TinyTanks::MakeListOfColorsID()

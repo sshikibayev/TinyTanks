@@ -67,17 +67,6 @@ void ATinyTankCharacter::PossessedBy(AController* NewController)
     ApplyMeshColor(ColorID);
 }
 
-void ATinyTankCharacter::Destroyed()
-{
-    SetActorHiddenInGame(true);
-    SetActorTickEnabled(false);
-
-    DetachComponent();
-    ShowDeathEffects();
-
-    Super::Destroyed();
-}
-
 void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -99,7 +88,6 @@ void ATinyTankCharacter::MoveCharacterToValidSpawnLocation()
     }
 }
 
-
 void ATinyTankCharacter::SetColorID()
 {
     if (auto PC_LocalTinyTanks = Cast<APC_TinyTanks>(GetController()))
@@ -108,6 +96,29 @@ void ATinyTankCharacter::SetColorID()
     }
 }
 
+void ATinyTankCharacter::HandleDestruction()
+{
+    CleanPlayerControllersData();
+
+    SetActorHiddenInGame(true);
+    SetActorTickEnabled(false);
+
+    DetachComponent();
+    ShowDeathEffects();
+
+    Destroy();
+}
+
+FTransform ATinyTankCharacter::GetRespawnPoint()
+{
+    if (HasAuthority())
+    {
+        FTransform RandomRespawnPoint = RespawnPoints[FMath::RandRange(0, RespawnPoints.Num() - 1)];
+        RespawnPoint = RandomRespawnPoint;
+    }
+
+    return RespawnPoint;
+}
 
 void ATinyTankCharacter::MoveToLocation(const FVector& Target)
 {
@@ -179,18 +190,10 @@ void ATinyTankCharacter::ShowDeathEffects()
     }
 }
 
-void ATinyTankCharacter::HandleDestruction()
+void ATinyTankCharacter::CleanPlayerControllersData()
 {
-    Destroy();
-}
-
-FTransform ATinyTankCharacter::GetRespawnPoint()
-{
-    if (HasAuthority())
+    if (PC_TinyTank)
     {
-        FTransform RandomRespawnPoint = RespawnPoints[FMath::RandRange(0, RespawnPoints.Num() - 1)];
-        RespawnPoint = RandomRespawnPoint;
+        PC_TinyTank->HandleDestructionOfTheCharacter();
     }
-
-    return RespawnPoint;
 }

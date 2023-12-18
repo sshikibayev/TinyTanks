@@ -27,12 +27,13 @@ public:
         return ColorID;
     }
 
-    void StopAllMovements();
+    void HandleDestructionOfTheCharacter();
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
 
 protected:
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
+    virtual void OnRep_Pawn() override;
     virtual void SetupInputComponent() override;
     virtual void OnPossess(APawn* aPawn) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -70,11 +71,8 @@ private:
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
 
-    UPROPERTY(ReplicatedUsing = OnRep_OnPossessFinished)
-    bool bOnPossessFinished{ false };
-
-    TObjectPtr<APawn> TinyTankPawn;
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
+    TObjectPtr<APawn> TinyTankPawn;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
@@ -89,12 +87,10 @@ private:
     void ServerStopMovement();
     UFUNCTION(Client, Reliable)
     void ClientStopMovement();
-
-    UFUNCTION()
-    void OnRep_OnPossessFinished();
+    UFUNCTION(Client, Reliable)
+    void ClientRefeshPathfinding();
 
     void SetColorID();
-    void OnPossessInit();
     void SetupInputMode();
     void ScoreboardInitialization();
     void MakeContinuesMovement();

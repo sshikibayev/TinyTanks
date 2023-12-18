@@ -47,7 +47,6 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void PossessedBy(AController* NewController) override;
-    virtual void Destroyed() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, Category = "Components")
@@ -101,6 +100,7 @@ private:
     void ApplyMeshColor(const int NewColorID);
     void CreatePawnAI();
     void SetupMovementSettings();
+    void CleanPlayerControllersData();
     void DetachComponent();
     void ShowDeathEffects();
 };
