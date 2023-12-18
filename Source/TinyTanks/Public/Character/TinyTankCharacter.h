@@ -86,7 +86,6 @@ private:
     UPROPERTY(EditAnywhere, Category = "Visual")
     TArray<TSoftObjectPtr<UMaterialInterface>> ListOfAvaliableColors;
 
-    TObjectPtr<APC_TinyTanks> PC_TinyTank;
     const FName TinyTankTag{ "TinyTank" };
     const float TargetArmLength{ 800.0f };
     const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
@@ -97,7 +96,7 @@ private:
 
     void MoveCharacterToValidSpawnLocation();
     void SetColorID();
-    void ApplyMeshColor(const int NewColorID);
+    void ApplyMeshesColor(const int NewColorID);
     void CreatePawnAI();
     void SetupMovementSettings();
     void CleanPlayerControllersData();

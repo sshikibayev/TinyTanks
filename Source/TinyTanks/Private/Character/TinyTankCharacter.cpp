@@ -62,9 +62,11 @@ void ATinyTankCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
-    PC_TinyTank = Cast<APC_TinyTanks>(NewController);
     SetColorID();
-    ApplyMeshColor(ColorID);
+    if (GetNetMode() != ENetMode::NM_DedicatedServer)
+    {
+        ApplyMeshesColor(ColorID);
+    }
 }
 
 void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -76,7 +78,7 @@ void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 void ATinyTankCharacter::OnRep_UpdateColor()
 {
-    ApplyMeshColor(ColorID);
+    ApplyMeshesColor(ColorID);
 }
 
 void ATinyTankCharacter::MoveCharacterToValidSpawnLocation()
@@ -90,9 +92,9 @@ void ATinyTankCharacter::MoveCharacterToValidSpawnLocation()
 
 void ATinyTankCharacter::SetColorID()
 {
-    if (auto PC_LocalTinyTanks = Cast<APC_TinyTanks>(GetController()))
+    if (TObjectPtr<APC_TinyTanks> PC_TinyTank = Cast<APC_TinyTanks>(GetController()))
     {
-        ColorID = PC_LocalTinyTanks->GetColorID();
+        ColorID = PC_TinyTank->GetColorID();
     }
 }
 
@@ -128,7 +130,7 @@ void ATinyTankCharacter::MoveToLocation(const FVector& Target)
     }
 }
 
-void ATinyTankCharacter::ApplyMeshColor(const int NewColorID)
+void ATinyTankCharacter::ApplyMeshesColor(const int NewColorID)
 {
     if (BaseMeshComponent && TurretMeshComponent)
     {
@@ -192,7 +194,7 @@ void ATinyTankCharacter::ShowDeathEffects()
 
 void ATinyTankCharacter::CleanPlayerControllersData()
 {
-    if (PC_TinyTank)
+    if (TObjectPtr<APC_TinyTanks> PC_TinyTank = Cast<APC_TinyTanks>(GetController()))
     {
         PC_TinyTank->HandleDestructionOfTheCharacter();
     }

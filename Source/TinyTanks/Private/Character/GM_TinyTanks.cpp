@@ -17,7 +17,7 @@ int AGM_TinyTanks::GetColorID()
 
     if (!ListOfColorsID.IsEmpty())
     {
-        int IndexOfColorsID{ FMath::RandRange(0, ListOfColorsID.Num() - 1) };
+        int IndexOfColorsID{ FMath::RandRange(0, ListOfColorsID.Num() - 1)};
         ColorID = ListOfColorsID[IndexOfColorsID];
         ListOfColorsID.RemoveAt(IndexOfColorsID);
     }
