@@ -13,9 +13,12 @@ class APC_TinyTanks;
 UCLASS()
 class TINYTANKS_API AGM_TinyTanks : public AGameMode
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
+    AGM_TinyTanks();
+
+    int GetColorID();
     void ActorDied(TObjectPtr<AActor> DeadActor);
     void ActorScored(TObjectPtr<AActor> ScoredActor);
 
@@ -26,7 +29,10 @@ private:
     TObjectPtr<APC_TinyTanks> PC_TinyTanks;
     FName TinyTankTag{ "TinyTank" };
     int PointsForKilling{ 1 };
+    int TotalColors{ 4 };
+    TArray<int> ListOfColorsID;
 
+    void MakeListOfColorsID();
     void UpdateKillingScore(const TObjectPtr<APC_TinyTanks> ScoreActorController);
     void ForceMovementStop();
     bool GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult);

@@ -16,15 +16,10 @@ class TINYTANKS_API APS_TinyTank : public APlayerState
     GENERATED_BODY()
 
 public:
-    virtual void BeginPlay() override;
-    virtual void Destroyed() override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
     FORCEINLINE int GetPlayerKillScore() const
     {
         return PlayerKillingScore;
     }
-
     FORCEINLINE FText GetPlayerNickname() const
     {
         return PlayerNickname;
@@ -32,6 +27,10 @@ public:
 
     void SetPlayerKillingScore(const int NewScore);
     void SetPlayerNickname(const FText& NewName);
+
+protected:
+    virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
     UPROPERTY(EditAnywhere, Category = Widget)
@@ -41,6 +40,7 @@ private:
 
     UPROPERTY(ReplicatedUsing = OnRep_UpdateScore)
     int PlayerKillingScore{ 0 };
+
     UPROPERTY(ReplicatedUsing = OnRep_UpdateName)
     FText PlayerNickname{ FText::FromString(TEXT("Player name")) };
 

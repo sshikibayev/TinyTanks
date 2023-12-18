@@ -16,6 +16,7 @@
 #include "Widgets/Scoreboard/W_PlayerData.h"
 #include "Kismet/GamePlayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "Character/GM_TinyTanks.h"
 #include "Net/UnrealNetwork.h"
 
 APC_TinyTanks::APC_TinyTanks()
@@ -33,6 +34,7 @@ void APC_TinyTanks::PostInitializeComponents()
     Super::PostInitializeComponents();
 
     ScoreboardInitialization();
+    SetColorID();
 }
 
 void APC_TinyTanks::BeginPlay()
@@ -79,6 +81,14 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
 void APC_TinyTanks::OnRep_OnPossessFinished()
 {
     OnPossessInit();
+}
+
+void APC_TinyTanks::SetColorID()
+{
+    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
+    {
+        ColorID = GM_TinyTanks->GetColorID();
+    }
 }
 
 void APC_TinyTanks::OnPossessInit()
@@ -197,6 +207,12 @@ void APC_TinyTanks::OneTouchAction()
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
         UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+      /*  auto TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
+        if (TinyTankCharacter)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Client Character is valid"));
+            TinyTankCharacter->MoveToLocation(CachedDestination);
+        }*/
         ServerNavigationMove(CachedDestination);
     }
 }
@@ -204,6 +220,12 @@ void APC_TinyTanks::OneTouchAction()
 void APC_TinyTanks::ServerNavigationMove_Implementation(const FVector& TargetDestination)
 {
     UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
+    /*auto TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
+    if (TinyTankCharacter)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Server Character is valid"));
+        TinyTankCharacter->MoveToLocation(TargetDestination);
+    }*/
 }
 
 void APC_TinyTanks::PathFindingRefresh()

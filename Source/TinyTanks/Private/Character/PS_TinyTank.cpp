@@ -18,11 +18,6 @@ void APS_TinyTank::BeginPlay()
     InitializePlayerDataWidgetToScoreboard();
 }
 
-void APS_TinyTank::Destroyed()
-{
-    Super::Destroyed();
-}
-
 void APS_TinyTank::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -81,6 +76,7 @@ void APS_TinyTank::SetPlayerNickname(const FText& NewName)
     PlayerNickname = NewName;
     WidgetDataUpdate();
 }
+
 
 void APS_TinyTank::OnRep_UpdateScore()
 {

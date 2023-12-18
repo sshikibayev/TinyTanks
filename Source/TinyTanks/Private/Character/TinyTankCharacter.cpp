@@ -9,6 +9,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AI/TinyTankAICharacter.h"
+#include "Net/UnrealNetwork.h"
 
 ATinyTankCharacter::ATinyTankCharacter()
 {
@@ -48,11 +50,21 @@ void ATinyTankCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
-    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
-    {
-        const FTransform SpawnPoint{ GM_TinyTanks->GetValidSpawnPoint(this) };
-        SetActorTransform(SpawnPoint);
-    }
+    MoveCharacterToValidSpawnLocation();
+
+    /* if (HasAuthority())
+     {
+         CreatePawnAI();
+     }*/
+}
+
+void ATinyTankCharacter::PossessedBy(AController* NewController)
+{
+    Super::PossessedBy(NewController);
+
+    PC_TinyTank = Cast<APC_TinyTanks>(NewController);
+    SetColorID();
+    ApplyMeshColor(ColorID);
 }
 
 void ATinyTankCharacter::Destroyed()
@@ -64,6 +76,74 @@ void ATinyTankCharacter::Destroyed()
     ShowDeathEffects();
 
     Super::Destroyed();
+}
+
+void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(ThisClass, ColorID);
+}
+
+void ATinyTankCharacter::OnRep_UpdateColor()
+{
+    ApplyMeshColor(ColorID);
+}
+
+void ATinyTankCharacter::MoveCharacterToValidSpawnLocation()
+{
+    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
+    {
+        const FTransform SpawnPoint{ GM_TinyTanks->GetValidSpawnPoint(this) };
+        SetActorTransform(SpawnPoint);
+    }
+}
+
+
+void ATinyTankCharacter::SetColorID()
+{
+    if (auto PC_LocalTinyTanks = Cast<APC_TinyTanks>(GetController()))
+    {
+        ColorID = PC_LocalTinyTanks->GetColorID();
+    }
+}
+
+
+void ATinyTankCharacter::MoveToLocation(const FVector& Target)
+{
+    if (TinyTankAICharacter)
+    {
+        TinyTankAICharacter->MoveToLocation(Target);
+    }
+}
+
+void ATinyTankCharacter::ApplyMeshColor(const int NewColorID)
+{
+    if (BaseMeshComponent && TurretMeshComponent)
+    {
+        BaseMeshComponent->SetMaterial(0, ListOfAvaliableColors[NewColorID].LoadSynchronous());
+        TurretMeshComponent->SetMaterial(0, ListOfAvaliableColors[NewColorID].LoadSynchronous());
+    }
+}
+
+void ATinyTankCharacter::CreatePawnAI()
+{
+    FActorSpawnParameters SpawnParameters;
+    SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    SpawnParameters.Owner = this;
+    TinyTankAICharacter = GetWorld()->SpawnActor<ATinyTankAICharacter>
+        (
+            TinyTankAICharacterClass,
+            GetActorLocation() + FVector(80.0f, 80.0f, 0.0f),
+            GetActorRotation(),
+            SpawnParameters
+        );
+
+    if (TinyTankAICharacter)
+    {
+        TinyTankAICharacter->PossessCreatedAIPawn(TinyTankAICharacter);
+        //TinyTankAICharacter->GetRootComponent()->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+    }
 }
 
 void ATinyTankCharacter::SetupMovementSettings()

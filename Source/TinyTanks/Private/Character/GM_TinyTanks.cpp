@@ -5,9 +5,25 @@
 #include "Character/TinyTankCharacter.h"
 #include "Character/PC_TinyTanks.h"
 #include "Character/PS_TinyTank.h"
-#include "GameFramework/GameStateBase.h"
-#include "Kismet/GameplayStatics.h"
-#include "GameFramework/Pawn.h"
+
+AGM_TinyTanks::AGM_TinyTanks()
+{
+    MakeListOfColorsID();
+}
+
+int AGM_TinyTanks::GetColorID()
+{
+    int ColorID{ 0 };
+
+    if (!ListOfColorsID.IsEmpty())
+    {
+        int IndexOfColorsID{ FMath::RandRange(0, ListOfColorsID.Num() - 1) };
+        ColorID = ListOfColorsID[IndexOfColorsID];
+        ListOfColorsID.RemoveAt(IndexOfColorsID);
+    }
+
+    return ColorID;
+}
 
 void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
 {
@@ -74,6 +90,14 @@ void AGM_TinyTanks::ForceMovementStop()
     if (PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController()))
     {
         PC_TinyTanks->StopAllMovements();
+    }
+}
+
+void AGM_TinyTanks::MakeListOfColorsID()
+{
+    for (int i{ 0 }; i < TotalColors; ++i)
+    {
+        ListOfColorsID.Emplace(i);
     }
 }
 

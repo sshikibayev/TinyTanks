@@ -13,6 +13,8 @@ class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
 class ATinyTankProjectile;
+class ATinyTankAICharacter;
+class APC_TinyTanks;
 
 UCLASS()
 class TINYTANKS_API ATinyTankCharacter : public ACharacter
@@ -40,9 +42,13 @@ public:
     void HandleDestruction();
     FTransform GetRespawnPoint();
 
+    void MoveToLocation(const FVector& Target);
+
 protected:
     virtual void BeginPlay() override;
+    virtual void PossessedBy(AController* NewController) override;
     virtual void Destroyed() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
     UPROPERTY(EditAnywhere, Category = "Components")
     TObjectPtr<USpringArmComponent> SpringArm;
@@ -69,12 +75,31 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Respawn")
     TArray<FTransform> RespawnPoints{};
 
+    UPROPERTY(EditAnywhere, Category = "AI")
+    TSubclassOf<ATinyTankAICharacter> TinyTankAICharacterClass;
+    TObjectPtr<ATinyTankAICharacter> TinyTankAICharacter;
+
+
 private:
+    UPROPERTY(ReplicatedUsing = OnRep_UpdateColor)
+    int ColorID{ 0 };
+
+    UPROPERTY(EditAnywhere, Category = "Visual")
+    TArray<TSoftObjectPtr<UMaterialInterface>> ListOfAvaliableColors;
+
+    TObjectPtr<APC_TinyTanks> PC_TinyTank;
     const FName TinyTankTag{ "TinyTank" };
     const float TargetArmLength{ 800.0f };
     const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
     FTransform RespawnPoint;
 
+    UFUNCTION()
+    void OnRep_UpdateColor();
+
+    void MoveCharacterToValidSpawnLocation();
+    void SetColorID();
+    void ApplyMeshColor(const int NewColorID);
+    void CreatePawnAI();
     void SetupMovementSettings();
     void DetachComponent();
     void ShowDeathEffects();

@@ -22,6 +22,11 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 public:
     APC_TinyTanks();
 
+    FORCEINLINE int GetColorID()
+    {
+        return ColorID;
+    }
+
     void StopAllMovements();
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
 
@@ -65,14 +70,16 @@ private:
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
 
+    UPROPERTY(ReplicatedUsing = OnRep_OnPossessFinished)
+    bool bOnPossessFinished{ false };
+
     TObjectPtr<APawn> TinyTankPawn;
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
     FTimerHandle FiringTimer;
-    UPROPERTY(ReplicatedUsing = OnRep_OnPossessFinished)
-    bool bOnPossessFinished{ false };
+    int ColorID{ 0 };
 
     UFUNCTION(Server, Reliable)
     void ServerHandleFire();
@@ -86,7 +93,7 @@ private:
     UFUNCTION()
     void OnRep_OnPossessFinished();
 
-
+    void SetColorID();
     void OnPossessInit();
     void SetupInputMode();
     void ScoreboardInitialization();
