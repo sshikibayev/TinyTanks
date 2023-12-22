@@ -8,91 +8,80 @@
 
 AGM_TinyTanks::AGM_TinyTanks()
 {
-    MakeListOfColorsID();
+    MakeListOfMaterialsID();
+    MakeListOfSpawnPoints();
 }
 
-int AGM_TinyTanks::GetColorID()
+int AGM_TinyTanks::GetMaterialID()
 {
-    int ColorID{ 0 };
+    int MaterialID{ 0 };
 
-    if (!ListOfColorsID.IsEmpty())
+    if (!ListOfMaterialsID.IsEmpty())
     {
-        int IndexOfColorsID{ FMath::RandRange(0, ListOfColorsID.Num() - 1)};
-        ColorID = ListOfColorsID[IndexOfColorsID];
-        ListOfColorsID.RemoveAt(IndexOfColorsID);
+        int IndexOfMaterialsID{ FMath::RandRange(0, ListOfMaterialsID.Num() - 1) };
+        MaterialID = ListOfMaterialsID[IndexOfMaterialsID];
+        ListOfMaterialsID.RemoveAt(IndexOfMaterialsID);
     }
 
-    return ColorID;
+    return MaterialID;
 }
 
-void AGM_TinyTanks::ActorDied(TObjectPtr<AActor> DeadActor)
+void AGM_TinyTanks::ActorDied(const TObjectPtr<AActor> DeadActor)
 {
     if (DeadActor && DeadActor->Tags.Contains(TinyTankTag))
     {
-        if (TinyTank = Cast<ATinyTankCharacter>(DeadActor))
+        if (TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(DeadActor))
         {
-            PC_TinyTanks = Cast<APC_TinyTanks>(TinyTank->GetController());
-            TinyTank->HandleDestruction();
-            FTransform ValidSpawnPoint{ GetValidSpawnPoint(TinyTank) };
-            RespawnPlayer(ValidSpawnPoint);
+            TObjectPtr<APlayerController> TinyTankController{ Cast<APlayerController>(TinyTankCharacter->GetController()) };
+            TinyTankCharacter->HandleDestruction();
+            FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
+            TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
+            PossessTinyTank(TinyTankController, TinyTankCharacter);
         }
     }
 }
 
-void AGM_TinyTanks::ActorScored(TObjectPtr<AActor> ScoredActor)
+void AGM_TinyTanks::PostLogin(APlayerController* NewPlayer)
 {
-    if (ScoredActor)
+    FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
+    TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
+    PossessTinyTank(NewPlayer, TinyTankCharacter);
+}
+
+void AGM_TinyTanks::PossessTinyTank(const TObjectPtr<APlayerController> PossessWith, const TObjectPtr<APawn> PossessWho)
+{
+    if (PossessWith)
     {
-        UpdateKillingScore(Cast<APC_TinyTanks>(ScoredActor));
+        PossessWith->Possess(PossessWho);
     }
 }
 
-FTransform AGM_TinyTanks::GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter> TinyTankCharacter)
+void AGM_TinyTanks::ActorScored(const TObjectPtr<APlayerController> ScoredActorController)
 {
-    const int MaxTries{ 25 };
-    int CountTries{ 0 };
-    FTransform CurrentSpawnPoint{ TinyTankCharacter->GetRespawnPoint() };
-
-    while (CountTries <= MaxTries)
+    if (ScoredActorController)
     {
-        bool bFoundValidPoint{ true };
-        ++CountTries;
-
-        TArray<struct FOverlapResult> OverlappingResults{};
-        CurrentSpawnPoint = TinyTankCharacter->GetRespawnPoint();
-
-        if (GetOverlapResult(CurrentSpawnPoint.GetLocation(), OverlappingResults))
-        {
-            for (const struct FOverlapResult& OverlappingActor : OverlappingResults)
-            {
-                if (OverlappingActor.GetActor() && OverlappingActor.GetActor()->Tags.Contains(TinyTankTag))
-                {
-                    bFoundValidPoint = false;
-                    break;
-                }
-            }
-        }
-
-        if (bFoundValidPoint)
-        {
-            CountTries = 0;
-            return CurrentSpawnPoint;
-        }
-    }
-    CountTries = 0;
-
-    return CurrentSpawnPoint;
-}
-
-void AGM_TinyTanks::MakeListOfColorsID()
-{
-    for (int i{ 0 }; i < TotalColors; ++i)
-    {
-        ListOfColorsID.Emplace(i);
+        UpdateKillingScore(ScoredActorController);
     }
 }
 
-void AGM_TinyTanks::UpdateKillingScore(const TObjectPtr<APC_TinyTanks> ScoreActorController)
+void AGM_TinyTanks::MakeListOfMaterialsID()
+{
+    for (int i{ 0 }; i < TotalMaterials; ++i)
+    {
+        ListOfMaterialsID.Emplace(i);
+    }
+}
+
+void AGM_TinyTanks::MakeListOfSpawnPoints()
+{
+    SpawnPoints.Emplace(FTransform(FRotator(0.0f, 90.0f, 0.0f), FVector(1600.0f, 1270.0f, 320.0f)));
+    SpawnPoints.Emplace(FTransform(FRotator(0.0f, 180.0f, 0.0f), FVector(1450.0f, 920.0f, 320.0f)));
+    SpawnPoints.Emplace(FTransform(FRotator(0.0f, 90.0f, 0.0f), FVector(860.0f, 400.0f, 120.0f)));
+    SpawnPoints.Emplace(FTransform(FRotator(0.0f, 270.0f, 0.0f), FVector(2390.0f, 2680.0f, 120.0f)));
+    SpawnPoints.Emplace(FTransform(FRotator(0.0f, 270.0f, 0.0f), FVector(410.0f, 2840.0f, 120.0f)));
+}
+
+void AGM_TinyTanks::UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController)
 {
     if (ScoreActorController)
     {
@@ -123,20 +112,64 @@ bool AGM_TinyTanks::GetOverlapResult(const FVector& OverlapLocation, TArray<stru
     return bHit;
 }
 
-void AGM_TinyTanks::RespawnPlayer(const FTransform& SpawnPoint)
+FTransform AGM_TinyTanks::GetValidSpawnPoint()
+{
+    const int MaxTries{ 25 };
+    int CountTries{ 0 };
+    FTransform CurrentSpawnPoint{ GetSpawnPoint() };
+
+    while (CountTries <= MaxTries)
+    {
+        bool bFoundValidPoint{ true };
+        ++CountTries;
+
+        TArray<struct FOverlapResult> OverlappingResults{};
+        CurrentSpawnPoint = GetSpawnPoint();
+
+        if (GetOverlapResult(CurrentSpawnPoint.GetLocation(), OverlappingResults))
+        {
+            for (const struct FOverlapResult& OverlappingActor : OverlappingResults)
+            {
+                if (OverlappingActor.GetActor() && OverlappingActor.GetActor()->Tags.Contains(TinyTankTag))
+                {
+                    bFoundValidPoint = false;
+                    break;
+                }
+            }
+        }
+
+        if (bFoundValidPoint)
+        {
+            CountTries = 0;
+            return CurrentSpawnPoint;
+        }
+    }
+    CountTries = 0;
+
+    return CurrentSpawnPoint;
+}
+
+FTransform AGM_TinyTanks::GetSpawnPoint()
+{
+    if (SpawnPoints.IsEmpty())
+    {
+        return FTransform::Identity;
+    }
+
+    return SpawnPoints[FMath::RandRange(0, SpawnPoints.Num() - 1)];
+}
+
+TObjectPtr<ACharacter> AGM_TinyTanks::GetSpawnedCharacter(const FTransform& SpawnPoint)
 {
     FActorSpawnParameters SpawnParams;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-    TObjectPtr<ATinyTankCharacter> NewSpawnTinyTank{ GetWorld()->SpawnActor<ATinyTankCharacter>
+    TObjectPtr<ACharacter> SpawnedCharacter = GetWorld()->SpawnActor<ATinyTankCharacter>
         (
-            TinyTank->GetTinyTankCharacterClass(),
+            TinyTankCharacterClass,
             SpawnPoint.GetLocation(),
             SpawnPoint.GetRotation().Rotator(),
             SpawnParams
-        ) };
+        );
 
-    if (PC_TinyTanks)
-    {
-        PC_TinyTanks->Possess(NewSpawnTinyTank);
-    }
+    return SpawnedCharacter;
 }

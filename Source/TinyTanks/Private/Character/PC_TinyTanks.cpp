@@ -101,7 +101,7 @@ void APC_TinyTanks::SetColorID()
 {
     if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
     {
-        ColorID = GM_TinyTanks->GetColorID();
+        ColorID = GM_TinyTanks->GetMaterialID();
     }
 }
 
@@ -193,15 +193,15 @@ void APC_TinyTanks::OneTouchAction()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
-        TObjectPtr<APC_AIController> PC_AITinyTank{ Cast<APC_AIController>(TinyTankPawn->GetController()) };
+       /* TObjectPtr<APC_AIController> PC_AITinyTank{ Cast<APC_AIController>(TinyTankPawn->GetController()) };
 
         if (PC_AITinyTank)
         {
             UE_LOG(LogTemp, Warning, TEXT("AI controller is valid: %s"), *PC_AITinyTank->GetName());
             PC_AITinyTank->MoveTinyTankToLocation(CachedDestination);
-        }
+        }*/
 
-        /*if (!HasAuthority())
+        if (!HasAuthority())
         {
             ServerNavigationMove(CachedDestination);
             UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
@@ -209,7 +209,7 @@ void APC_TinyTanks::OneTouchAction()
         else
         {
             UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-        }*/
+        }
     }
 }
 

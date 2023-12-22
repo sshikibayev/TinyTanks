@@ -8,7 +8,6 @@
 #include "GM_TinyTanks.generated.h"
 
 class ATinyTankCharacter;
-class APC_TinyTanks;
 
 UCLASS()
 class TINYTANKS_API AGM_TinyTanks : public AGameMode
@@ -18,22 +17,30 @@ class TINYTANKS_API AGM_TinyTanks : public AGameMode
 public:
     AGM_TinyTanks();
 
-    int GetColorID();
-    void ActorDied(TObjectPtr<AActor> DeadActor);
-    void ActorScored(TObjectPtr<AActor> ScoredActor);
+    int GetMaterialID();
+    void ActorDied(const TObjectPtr<AActor> DeadActor);
+    void ActorScored(const TObjectPtr<APlayerController> ScoredActorController);
 
-    FTransform GetValidSpawnPoint(const TObjectPtr<ATinyTankCharacter> TinyTankCharacter);
+protected:
+    virtual void PostLogin(APlayerController* NewPlayer) override;
 
 private:
-    TObjectPtr<ATinyTankCharacter> TinyTank;
-    TObjectPtr<APC_TinyTanks> PC_TinyTanks;
+    UPROPERTY(EditAnywhere, Category = "Spawn")
+    TArray<FTransform> SpawnPoints{};
+    UPROPERTY(EditAnywhere, Category = "Spawn")
+    TSubclassOf<ATinyTankCharacter> TinyTankCharacterClass;
+
     FName TinyTankTag{ "TinyTank" };
     int PointsForKilling{ 1 };
-    int TotalColors{ 4 };
-    TArray<int> ListOfColorsID;
+    int TotalMaterials{ 4 };
+    TArray<int> ListOfMaterialsID;
 
-    void MakeListOfColorsID();
-    void UpdateKillingScore(const TObjectPtr<APC_TinyTanks> ScoreActorController);
+    void PossessTinyTank(const TObjectPtr<APlayerController> PossessWith, const TObjectPtr<APawn> PossessWho);
+    void MakeListOfMaterialsID();
+    void MakeListOfSpawnPoints();
+    void UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController);
     bool GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult);
-    void RespawnPlayer(const FTransform& SpawnPoint);
+    FTransform GetValidSpawnPoint();
+    FTransform GetSpawnPoint();
+    TObjectPtr<ACharacter> GetSpawnedCharacter(const FTransform& SpawnPoint);
 };

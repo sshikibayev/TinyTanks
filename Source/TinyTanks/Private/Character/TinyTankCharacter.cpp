@@ -4,7 +4,6 @@
 #include "Character/TinyTankCharacter.h"
 
 #include "Character/PC_TinyTanks.h"
-#include "Character/GM_TinyTanks.h"
 #include "Kismet/GamePlayStatics.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -50,8 +49,6 @@ ATinyTankCharacter::ATinyTankCharacter()
 void ATinyTankCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
-    MoveCharacterToValidSpawnLocation();
 }
 
 void ATinyTankCharacter::PossessedBy(AController* NewController)
@@ -61,7 +58,7 @@ void ATinyTankCharacter::PossessedBy(AController* NewController)
     SetColorID();
     if (GetNetMode() != ENetMode::NM_DedicatedServer)
     {
-        ApplyMeshesColor(ColorID);
+        ApplyMeshesColor(MaterialID);
     }
 }
 
@@ -69,28 +66,19 @@ void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    DOREPLIFETIME(ThisClass, ColorID);
+    DOREPLIFETIME(ThisClass, MaterialID);
 }
 
 void ATinyTankCharacter::OnRep_UpdateColor()
 {
-    ApplyMeshesColor(ColorID);
-}
-
-void ATinyTankCharacter::MoveCharacterToValidSpawnLocation()
-{
-    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
-    {
-        const FTransform SpawnPoint{ GM_TinyTanks->GetValidSpawnPoint(this) };
-        SetActorTransform(SpawnPoint);
-    }
+    ApplyMeshesColor(MaterialID);
 }
 
 void ATinyTankCharacter::SetColorID()
 {
     if (TObjectPtr<APC_TinyTanks> PC_TinyTank = Cast<APC_TinyTanks>(GetController()))
     {
-        ColorID = PC_TinyTank->GetColorID();
+        MaterialID = PC_TinyTank->GetColorID();
     }
 }
 
@@ -105,23 +93,12 @@ void ATinyTankCharacter::HandleDestruction()
     Destroy();
 }
 
-FTransform ATinyTankCharacter::GetRespawnPoint()
-{
-    if (HasAuthority())
-    {
-        FTransform RandomRespawnPoint = RespawnPoints[FMath::RandRange(0, RespawnPoints.Num() - 1)];
-        RespawnPoint = RandomRespawnPoint;
-    }
-
-    return RespawnPoint;
-}
-
-void ATinyTankCharacter::ApplyMeshesColor(const int NewColorID)
+void ATinyTankCharacter::ApplyMeshesColor(const int NewMaterialID)
 {
     if (BaseMeshComponent && TurretMeshComponent)
     {
-        BaseMeshComponent->SetMaterial(0, ListOfAvaliableColors[NewColorID].LoadSynchronous());
-        TurretMeshComponent->SetMaterial(0, ListOfAvaliableColors[NewColorID].LoadSynchronous());
+        BaseMeshComponent->SetMaterial(0, ListOfAvaliableMaterials[NewMaterialID].LoadSynchronous());
+        TurretMeshComponent->SetMaterial(0, ListOfAvaliableMaterials[NewMaterialID].LoadSynchronous());
     }
 }
 

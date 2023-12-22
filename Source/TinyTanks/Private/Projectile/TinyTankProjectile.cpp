@@ -53,11 +53,12 @@ void ATinyTankProjectile::Destroyed()
     Super::Destroyed();
 }
 
+//*Killer - is a APlayerController;
 void ATinyTankProjectile::AddScoreForKilling(const TObjectPtr<AActor> Killer)
 {
     if (GetOwner()->HasAuthority() && GM_TinyTanks)
     {
-        GM_TinyTanks->ActorScored(Killer);
+        GM_TinyTanks->ActorScored(Cast<APlayerController>(Killer));
     }
 }
 
@@ -101,6 +102,7 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 DamageTypeClass
             );
 
+            //Here is passing not AActor but APlayerController;
             AddScoreForKilling(MyOwner);
         }
     }
