@@ -10,6 +10,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI/TinyTankAICharacter.h"
+#include "AI/PC_AIController.h"
 #include "Net/UnrealNetwork.h"
 
 ATinyTankCharacter::ATinyTankCharacter()
@@ -51,11 +52,6 @@ void ATinyTankCharacter::BeginPlay()
     Super::BeginPlay();
 
     MoveCharacterToValidSpawnLocation();
-
-    /* if (HasAuthority())
-     {
-         CreatePawnAI();
-     }*/
 }
 
 void ATinyTankCharacter::PossessedBy(AController* NewController)
@@ -100,8 +96,6 @@ void ATinyTankCharacter::SetColorID()
 
 void ATinyTankCharacter::HandleDestruction()
 {
-    CleanPlayerControllersData();
-
     SetActorHiddenInGame(true);
     SetActorTickEnabled(false);
 
@@ -122,14 +116,6 @@ FTransform ATinyTankCharacter::GetRespawnPoint()
     return RespawnPoint;
 }
 
-void ATinyTankCharacter::MoveToLocation(const FVector& Target)
-{
-    if (TinyTankAICharacter)
-    {
-        TinyTankAICharacter->MoveToLocation(Target);
-    }
-}
-
 void ATinyTankCharacter::ApplyMeshesColor(const int NewColorID)
 {
     if (BaseMeshComponent && TurretMeshComponent)
@@ -141,22 +127,22 @@ void ATinyTankCharacter::ApplyMeshesColor(const int NewColorID)
 
 void ATinyTankCharacter::CreatePawnAI()
 {
-    FActorSpawnParameters SpawnParameters;
-    SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    SpawnParameters.Owner = this;
-    TinyTankAICharacter = GetWorld()->SpawnActor<ATinyTankAICharacter>
-        (
-            TinyTankAICharacterClass,
-            GetActorLocation() + FVector(80.0f, 80.0f, 0.0f),
-            GetActorRotation(),
-            SpawnParameters
-        );
+    //FActorSpawnParameters SpawnParameters;
+    //SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    //SpawnParameters.Owner = this;
+    //TinyTankAICharacter = GetWorld()->SpawnActor<ATinyTankAICharacter>
+    //    (
+    //        TinyTankAICharacterClass,
+    //        GetActorLocation() + FVector(80.0f, 80.0f, 0.0f),
+    //        GetActorRotation(),
+    //        SpawnParameters
+    //    );
 
-    if (TinyTankAICharacter)
-    {
-        TinyTankAICharacter->PossessCreatedAIPawn(TinyTankAICharacter);
-        //TinyTankAICharacter->GetRootComponent()->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-    }
+    //if (TinyTankAICharacter)
+    //{
+    //    TinyTankAICharacter->PossessCreatedAIPawn(TinyTankAICharacter);
+    //    //TinyTankAICharacter->GetRootComponent()->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+    //}
 }
 
 void ATinyTankCharacter::SetupMovementSettings()
@@ -189,13 +175,5 @@ void ATinyTankCharacter::ShowDeathEffects()
         );
 
         GetWorld()->GetFirstPlayerController()->ClientStartCameraShake(DeathCameraShakeClass);
-    }
-}
-
-void ATinyTankCharacter::CleanPlayerControllersData()
-{
-    if (TObjectPtr<APC_TinyTanks> PC_TinyTank = Cast<APC_TinyTanks>(GetController()))
-    {
-        PC_TinyTank->HandleDestructionOfTheCharacter();
     }
 }

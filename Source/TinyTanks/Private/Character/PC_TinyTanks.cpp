@@ -17,6 +17,7 @@
 #include "Kismet/GamePlayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Character/GM_TinyTanks.h"
+#include "AI/PC_AIController.h"
 #include "Net/UnrealNetwork.h"
 
 APC_TinyTanks::APC_TinyTanks()
@@ -44,30 +45,37 @@ void APC_TinyTanks::BeginPlay()
     SetupInputMode();
 }
 
-void APC_TinyTanks::OnRep_Pawn()
-{
-    Super::OnRep_Pawn();
-
-    //Calls when a pawn is possessed;
-    TinyTankPawn = GetPawn();
-}
-
 void APC_TinyTanks::OnPossess(APawn* aPawn)
 {
     Super::OnPossess(aPawn);
 
-    if (HasAuthority())
+    if (aPawn)
     {
-        TinyTankPawn = aPawn;
-        StopMovement();
-        ClientStopMovement();
-        ClientRefeshPathfinding();
+        UE_LOG(LogTemp, Warning, TEXT("OnPossess inside controller: %s"), *aPawn->GetName());
     }
+}
+
+void APC_TinyTanks::SetupInputComponent()
+{
+    Super::SetupInputComponent();
+
+    PrepareInputSubsystem();
+    AddingMappingContext(InputSubsystem, IMC_TinyTanks);
+    BindInputActions();
 }
 
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
+void APC_TinyTanks::BeginPlayingState()
+{
+    Super::BeginPlayingState();
+
+    TinyTankPawn = GetPawn();
+    PathFindingRefresh();
+    StopMovement();
 }
 
 void APC_TinyTanks::ScoreboardInitialization()
@@ -105,37 +113,9 @@ void APC_TinyTanks::SetupInputMode()
     SetInputMode(InputMode);
 }
 
-void APC_TinyTanks::HandleDestructionOfTheCharacter()
-{
-    if (HasAuthority())
-    {
-        StopMovement();
-        ClientStopMovement();
-    }
-}
-
 void APC_TinyTanks::ServerStopMovement_Implementation()
 {
     StopMovement();
-}
-
-void APC_TinyTanks::ClientStopMovement_Implementation()
-{
-    StopMovement();
-}
-
-void APC_TinyTanks::ClientRefeshPathfinding_Implementation()
-{
-    PathFindingRefresh();
-}
-
-void APC_TinyTanks::SetupInputComponent()
-{
-    Super::SetupInputComponent();
-
-    PrepareInputSubsystem();
-    AddingMappingContext(InputSubsystem, IMC_TinyTanks);
-    BindInputActions();
 }
 
 void APC_TinyTanks::PrepareInputSubsystem()
@@ -213,26 +193,29 @@ void APC_TinyTanks::OneTouchAction()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
-        UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-      /*  auto TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
-        if (TinyTankCharacter)
+        TObjectPtr<APC_AIController> PC_AITinyTank{ Cast<APC_AIController>(TinyTankPawn->GetController()) };
+
+        if (PC_AITinyTank)
         {
-            UE_LOG(LogTemp, Warning, TEXT("Client Character is valid"));
-            TinyTankCharacter->MoveToLocation(CachedDestination);
+            UE_LOG(LogTemp, Warning, TEXT("AI controller is valid: %s"), *PC_AITinyTank->GetName());
+            PC_AITinyTank->MoveTinyTankToLocation(CachedDestination);
+        }
+
+        /*if (!HasAuthority())
+        {
+            ServerNavigationMove(CachedDestination);
+            UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
+        }
+        else
+        {
+            UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
         }*/
-        ServerNavigationMove(CachedDestination);
     }
 }
 
 void APC_TinyTanks::ServerNavigationMove_Implementation(const FVector& TargetDestination)
 {
     UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
-    /*auto TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
-    if (TinyTankCharacter)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Server Character is valid"));
-        TinyTankCharacter->MoveToLocation(TargetDestination);
-    }*/
 }
 
 void APC_TinyTanks::PathFindingRefresh()

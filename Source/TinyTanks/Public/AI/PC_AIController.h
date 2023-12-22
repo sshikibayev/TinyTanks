@@ -11,7 +11,11 @@ class TINYTANKS_API APC_AIController : public AAIController
 {
 	GENERATED_BODY()
 
+public:
+    void MoveTinyTankToLocation(const FVector& Direction);
+
 protected:
     virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
     virtual void OnPossess(APawn* aPawn) override;
+
 };

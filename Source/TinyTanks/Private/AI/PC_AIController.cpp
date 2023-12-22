@@ -3,6 +3,18 @@
 
 #include "AI/PC_AIController.h"
 
+void APC_AIController::MoveTinyTankToLocation(const FVector& Direction)
+{
+    UE_LOG(LogTemp, Warning, TEXT("MoveTinyTankToLocation to: %s"), *Direction.ToString());
+
+    MoveToLocation(Direction);
+
+    if (GetPawn())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Pawn inside AI controller: %s"), *GetPawn()->GetName());
+    }
+}
+
 void APC_AIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
 {
     UE_LOG(LogTemp, Warning, TEXT("OnMoveCompleted is finished: %s"), *Result.ToString());

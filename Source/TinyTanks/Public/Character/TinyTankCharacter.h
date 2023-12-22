@@ -13,8 +13,9 @@ class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
 class ATinyTankProjectile;
-class ATinyTankAICharacter;
 class APC_TinyTanks;
+class ATinyTankAICharacter;
+class APC_AIController;
 
 UCLASS()
 class TINYTANKS_API ATinyTankCharacter : public ACharacter
@@ -41,8 +42,6 @@ public:
 
     void HandleDestruction();
     FTransform GetRespawnPoint();
-
-    void MoveToLocation(const FVector& Target);
 
 protected:
     virtual void BeginPlay() override;
@@ -78,7 +77,6 @@ protected:
     TSubclassOf<ATinyTankAICharacter> TinyTankAICharacterClass;
     TObjectPtr<ATinyTankAICharacter> TinyTankAICharacter;
 
-
 private:
     UPROPERTY(ReplicatedUsing = OnRep_UpdateColor)
     int ColorID{ 0 };
@@ -99,7 +97,6 @@ private:
     void ApplyMeshesColor(const int NewColorID);
     void CreatePawnAI();
     void SetupMovementSettings();
-    void CleanPlayerControllersData();
     void DetachComponent();
     void ShowDeathEffects();
 };

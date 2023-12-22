@@ -24,6 +24,7 @@ ATinyTankAICharacter::ATinyTankAICharacter()
 
     PC_AIController = CreateDefaultSubobject<APC_AIController>(TEXT("AIController"));
     AIControllerClass = PC_AIControllerClass;
+    PC_AIController->SetOwner(this);
 }
 
 void ATinyTankAICharacter::MoveToLocation(const FVector& Target)

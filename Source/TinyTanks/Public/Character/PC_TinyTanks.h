@@ -27,17 +27,15 @@ public:
         return ColorID;
     }
 
-    void HandleDestructionOfTheCharacter();
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
 
 protected:
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
-    virtual void OnRep_Pawn() override;
-    virtual void SetupInputComponent() override;
     virtual void OnPossess(APawn* aPawn) override;
+    virtual void SetupInputComponent() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+    virtual void BeginPlayingState() override;
 
     void OnInputStarted();
     void OnSetDestinationTriggered();
@@ -82,13 +80,9 @@ private:
     UFUNCTION(Server, Reliable)
     void ServerHandleFire();
     UFUNCTION(Server, Reliable)
-    void ServerNavigationMove(const FVector& TargetDestionation);
-    UFUNCTION(Server, Reliable)
+    void ServerNavigationMove(const FVector& TargetDestination);
+    UFUNCTION(Server, Unreliable)
     void ServerStopMovement();
-    UFUNCTION(Client, Reliable)
-    void ClientStopMovement();
-    UFUNCTION(Client, Reliable)
-    void ClientRefeshPathfinding();
 
     void SetColorID();
     void SetupInputMode();
