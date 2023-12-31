@@ -2,28 +2,41 @@
 
 
 #include "AI/PC_AIController.h"
+#include "Character/GM_TinyTanks.h"
+#include "Kismet/GameplayStatics.h"
 
-void APC_AIController::MoveTinyTankToLocation(const FVector& Direction)
+void APC_AIController::SmartMoveToLocation(const FVector& Direction)
 {
-    UE_LOG(LogTemp, Warning, TEXT("MoveTinyTankToLocation to: %s"), *Direction.ToString());
-
     MoveToLocation(Direction);
+}
 
-    if (GetPawn())
+void APC_AIController::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    SetColorID();
+}
+
+void APC_AIController::BeginPlay()
+{
+    Super::BeginPlay();
+
+    PathFindingRefresh();
+}
+
+void APC_AIController::SetColorID()
+{
+    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Pawn inside AI controller: %s"), *GetPawn()->GetName());
+        ColorID = GM_TinyTanks->GetMaterialID();
     }
 }
 
-void APC_AIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+void APC_AIController::PathFindingRefresh()
 {
-    UE_LOG(LogTemp, Warning, TEXT("OnMoveCompleted is finished: %s"), *Result.ToString());
-}
-
-void APC_AIController::OnPossess(APawn* aPawn)
-{
-    if (aPawn)
+    TObjectPtr<UPathFollowingComponent> PathFollowingComp = FindComponentByClass<UPathFollowingComponent>();
+    if (PathFollowingComp)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Possessed inside AI controller: %s"), *aPawn->GetName());
+        PathFollowingComp->UpdateCachedComponents();
     }
 }

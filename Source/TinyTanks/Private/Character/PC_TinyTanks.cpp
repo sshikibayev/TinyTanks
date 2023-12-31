@@ -3,7 +3,6 @@
 
 #include "Character/PC_TinyTanks.h"
 
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "NiagaraFunctionLibrary.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
@@ -35,7 +34,6 @@ void APC_TinyTanks::PostInitializeComponents()
     Super::PostInitializeComponents();
 
     ScoreboardInitialization();
-    SetColorID();
 }
 
 void APC_TinyTanks::BeginPlay()
@@ -43,16 +41,6 @@ void APC_TinyTanks::BeginPlay()
     Super::BeginPlay();
 
     SetupInputMode();
-}
-
-void APC_TinyTanks::OnPossess(APawn* aPawn)
-{
-    Super::OnPossess(aPawn);
-
-    if (aPawn)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("OnPossess inside controller: %s"), *aPawn->GetName());
-    }
 }
 
 void APC_TinyTanks::SetupInputComponent()
@@ -64,18 +52,20 @@ void APC_TinyTanks::SetupInputComponent()
     BindInputActions();
 }
 
+void APC_TinyTanks::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    if (!HasAuthority() && bContinuesMovementHold)
+    {
+        ServerMakeContinuesMovement(CachedDestination);
+    }
+}
+
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}
 
-void APC_TinyTanks::BeginPlayingState()
-{
-    Super::BeginPlayingState();
-
-    TinyTankPawn = GetPawn();
-    PathFindingRefresh();
-    StopMovement();
+    //DOREPLIFETIME(ThisClass, TinyTankCharacter);
 }
 
 void APC_TinyTanks::ScoreboardInitialization()
@@ -97,25 +87,12 @@ void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
     }
 }
 
-void APC_TinyTanks::SetColorID()
-{
-    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
-    {
-        ColorID = GM_TinyTanks->GetMaterialID();
-    }
-}
-
 void APC_TinyTanks::SetupInputMode()
 {
     FInputModeGameAndUI InputMode;
     InputMode.SetHideCursorDuringCapture(false);
     InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::LockAlways);
     SetInputMode(InputMode);
-}
-
-void APC_TinyTanks::ServerStopMovement_Implementation()
-{
-    StopMovement();
 }
 
 void APC_TinyTanks::PrepareInputSubsystem()
@@ -155,8 +132,14 @@ void APC_TinyTanks::BindInputActions()
 
 void APC_TinyTanks::OnInputStarted()
 {
-    StopMovement();
-    ServerStopMovement();
+    if (HasAuthority() && TinyTankCharacter)
+    {
+        TinyTankCharacter->GetController()->StopMovement();
+    }
+    else
+    {
+        ServerStopMovement();
+    }
 }
 
 void APC_TinyTanks::OnSetDestinationTriggered()
@@ -169,15 +152,32 @@ void APC_TinyTanks::OnSetDestinationTriggered()
         CachedDestination = Hit.Location;
     }
 
-    MakeContinuesMovement();
+    if (HasAuthority())
+    {
+        ContinuesMovement(CachedDestination);
+    }
+    else
+    {
+        bContinuesMovementHold = true;
+    }
 }
 
-void APC_TinyTanks::MakeContinuesMovement()
+void APC_TinyTanks::ServerMakeContinuesMovement_Implementation(const FVector& Destination)
 {
-    if (TinyTankPawn)
+    ContinuesMovement(Destination);
+}
+
+void APC_TinyTanks::ServerStopMovement_Implementation()
+{
+    TinyTankCharacter->GetController()->StopMovement();
+}
+
+void APC_TinyTanks::ContinuesMovement(const FVector& Destination)
+{
+    if (TinyTankCharacter)
     {
-        FVector WorldDirection = (CachedDestination - TinyTankPawn->GetActorLocation()).GetSafeNormal();
-        TinyTankPawn->AddMovementInput(WorldDirection, 1.0, false);
+        FVector WorldDirection = (Destination - TinyTankCharacter->GetActorLocation()).GetSafeNormal();
+        TinyTankCharacter->AddMovementInput(WorldDirection, 1.0, false);
     }
 }
 
@@ -185,6 +185,7 @@ void APC_TinyTanks::OnSetDestinationReleased()
 {
     OneTouchAction();
     FollowTime = 0.f;
+    bContinuesMovementHold = false;
 }
 
 void APC_TinyTanks::OneTouchAction()
@@ -193,37 +194,24 @@ void APC_TinyTanks::OneTouchAction()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
-       /* TObjectPtr<APC_AIController> PC_AITinyTank{ Cast<APC_AIController>(TinyTankPawn->GetController()) };
-
-        if (PC_AITinyTank)
-        {
-            UE_LOG(LogTemp, Warning, TEXT("AI controller is valid: %s"), *PC_AITinyTank->GetName());
-            PC_AITinyTank->MoveTinyTankToLocation(CachedDestination);
-        }*/
-
-        if (!HasAuthority())
-        {
-            ServerNavigationMove(CachedDestination);
-            UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-        }
-        else
-        {
-            UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, CachedDestination);
-        }
+        ServerSmartMove(CachedDestination);
     }
 }
 
-void APC_TinyTanks::ServerNavigationMove_Implementation(const FVector& TargetDestination)
+void APC_TinyTanks::ServerSmartMove_Implementation(const FVector& Destination)
 {
-    UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, TargetDestination);
+    SmartMovement(Destination);
 }
 
-void APC_TinyTanks::PathFindingRefresh()
+void APC_TinyTanks::SmartMovement(const FVector& Destination)
 {
-    TObjectPtr<UPathFollowingComponent> PathFollowingComp = FindComponentByClass<UPathFollowingComponent>();
-    if (PathFollowingComp)
+    if (TinyTankCharacter)
     {
-        PathFollowingComp->UpdateCachedComponents();
+        TObjectPtr<APC_AIController> PC_AI{ Cast<APC_AIController>(TinyTankCharacter->GetController()) };
+        if (PC_AI)
+        {
+            PC_AI->SmartMoveToLocation(Destination);
+        }
     }
 }
 
@@ -242,7 +230,6 @@ void APC_TinyTanks::ServerHandleFire_Implementation()
     FActorSpawnParameters SpawnParameters;
     SpawnParameters.Instigator = GetInstigator();
     SpawnParameters.Owner = this;
-    TObjectPtr<ATinyTankCharacter> TinyTankCharacter{ Cast<ATinyTankCharacter>(GetPawn()) };
     if (TinyTankCharacter)
     {
         TObjectPtr<ATinyTankProjectile> Projectile = GetWorld()->SpawnActor<ATinyTankProjectile>
@@ -258,4 +245,24 @@ void APC_TinyTanks::ServerHandleFire_Implementation()
 void APC_TinyTanks::StopFire()
 {
     bFiringWeapon = false;
+}
+
+void APC_TinyTanks::DrawDebugRayFromMouseClick()
+{
+    FVector WorldLocation;
+    FVector WorldDirection;
+    DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+    FVector TraceEnd = WorldLocation + WorldDirection * 10000.0f; // Adjust the distance as needed
+    FHitResult HitResult;
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(this); // Ignore the player controller itself
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_GameTraceChannel10, CollisionParams))
+    {
+        DrawDebugLine(GetWorld(), WorldLocation, HitResult.ImpactPoint, FColor::Green, false, -1, 0, 1);
+        UE_LOG(LogTemp, Warning, TEXT("Hit actor: %s"), *HitResult.GetActor()->GetName());
+    }
+    else
+    {
+        DrawDebugLine(GetWorld(), WorldLocation, TraceEnd, FColor::Red, false, -1, 0, 1);
+    }
 }

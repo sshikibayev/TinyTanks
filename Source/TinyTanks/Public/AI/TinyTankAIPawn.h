@@ -19,11 +19,6 @@ public:
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-    void MoveToLocation(const FVector& Target);
-
 protected:
 	virtual void BeginPlay() override;
-
-private:
-    TObjectPtr<APC_AIController> PC_AIController;
 };

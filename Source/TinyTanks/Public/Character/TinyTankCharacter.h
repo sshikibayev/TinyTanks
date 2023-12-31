@@ -7,8 +7,6 @@
 
 #include "TinyTankCharacter.generated.h"
 
-class USpringArmComponent;
-class UCameraComponent;
 class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
@@ -41,10 +39,6 @@ protected:
     virtual void PossessedBy(AController* NewController) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    UPROPERTY(EditAnywhere, Category = "Components")
-    TObjectPtr<USpringArmComponent> SpringArm;
-    UPROPERTY(EditAnywhere, Category = "Components")
-    TObjectPtr<UCameraComponent> Camera;
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
     UPROPERTY(VisibleAnywhere, Category = "Components")
@@ -73,15 +67,12 @@ private:
     TArray<TSoftObjectPtr<UMaterialInterface>> ListOfAvaliableMaterials;
 
     const FName TinyTankTag{ "TinyTank" };
-    const float TargetArmLength{ 800.0f };
-    const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
 
     UFUNCTION()
     void OnRep_UpdateColor();
 
     void SetColorID();
     void ApplyMeshesColor(const int NewMaterialID);
-    void CreatePawnAI();
     void SetupMovementSettings();
     void DetachComponent();
     void ShowDeathEffects();

@@ -9,13 +9,23 @@
 UCLASS()
 class TINYTANKS_API APC_AIController : public AAIController
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-    void MoveTinyTankToLocation(const FVector& Direction);
+    FORCEINLINE int GetColorID()
+    {
+        return ColorID;
+    }
+
+    void SmartMoveToLocation(const FVector& Direction);
 
 protected:
-    virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
-    virtual void OnPossess(APawn* aPawn) override;
+    virtual void PostInitializeComponents() override;
+    virtual void BeginPlay() override;
 
+private:
+    int ColorID{ 0 };
+
+    void SetColorID();
+    void PathFindingRefresh();
 };

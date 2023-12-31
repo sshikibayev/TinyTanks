@@ -8,6 +8,7 @@
 #include "GM_TinyTanks.generated.h"
 
 class ATinyTankCharacter;
+class APC_AIController;
 
 UCLASS()
 class TINYTANKS_API AGM_TinyTanks : public AGameMode
@@ -35,7 +36,6 @@ private:
     int TotalMaterials{ 4 };
     TArray<int> ListOfMaterialsID;
 
-    void PossessTinyTank(const TObjectPtr<APlayerController> PossessWith, const TObjectPtr<APawn> PossessWho);
     void MakeListOfMaterialsID();
     void MakeListOfSpawnPoints();
     void UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController);

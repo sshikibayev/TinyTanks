@@ -13,6 +13,7 @@ class UInputAction;
 class UEnhancedInputLocalPlayerSubsystem;
 class UW_PlayerData;
 class UW_Scoreboard;
+class ATinyTankCharacter;
 
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
@@ -22,9 +23,14 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 public:
     APC_TinyTanks();
 
-    FORCEINLINE int GetColorID()
+    FORCEINLINE void SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
     {
-        return ColorID;
+        TinyTankCharacter = NewTinyTankCharacter;
+    }
+
+    FORCEINLINE TObjectPtr<ATinyTankCharacter> GetTinyTankCharacter()
+    {
+        return TinyTankCharacter;
     }
 
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
@@ -32,10 +38,9 @@ public:
 protected:
     virtual void PostInitializeComponents() override;
     virtual void BeginPlay() override;
-    virtual void OnPossess(APawn* aPawn) override;
     virtual void SetupInputComponent() override;
+    virtual void Tick(float DeltaSeconds) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-    virtual void BeginPlayingState() override;
 
     void OnInputStarted();
     void OnSetDestinationTriggered();
@@ -48,7 +53,9 @@ protected:
 
 private:
     UPROPERTY(EditAnywhere, Category = Input)
-    float ShortPressThreshold{ 0.3f };
+    float ShortPressThreshold{ 0.25f };
+
+    bool bContinuesMovementHold{ false };
 
     UPROPERTY(EditAnywhere, Category = Input)
     TObjectPtr<UNiagaraSystem> FXCursor;
@@ -69,8 +76,11 @@ private:
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
 
+    UPROPERTY()
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-    TObjectPtr<APawn> TinyTankPawn;
+    UPROPERTY(Replicated)
+    TObjectPtr<ATinyTankCharacter> TinyTankCharacter;
+
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
@@ -79,18 +89,20 @@ private:
 
     UFUNCTION(Server, Reliable)
     void ServerHandleFire();
-    UFUNCTION(Server, Reliable)
-    void ServerNavigationMove(const FVector& TargetDestination);
     UFUNCTION(Server, Unreliable)
     void ServerStopMovement();
+    UFUNCTION(Server, Unreliable)
+    void ServerMakeContinuesMovement(const FVector& Destination);
+    UFUNCTION(Server, Unreliable)
+    void ServerSmartMove(const FVector& Destination);
 
-    void SetColorID();
+    void ContinuesMovement(const FVector& Destination);
+    void SmartMovement(const FVector& Destination);
     void SetupInputMode();
     void ScoreboardInitialization();
-    void MakeContinuesMovement();
     void OneTouchAction();
-    void PathFindingRefresh();
     void PrepareInputSubsystem();
     void AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext);
     void BindInputActions();
+    void DrawDebugRayFromMouseClick();
 };

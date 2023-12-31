@@ -3,13 +3,51 @@
 #include "Character/GM_TinyTanks.h"
 
 #include "Character/TinyTankCharacter.h"
-#include "Character/PC_TinyTanks.h"
 #include "Character/PS_TinyTank.h"
+#include "Character/PC_TinyTanks.h"
 
 AGM_TinyTanks::AGM_TinyTanks()
 {
     MakeListOfMaterialsID();
     MakeListOfSpawnPoints();
+}
+
+void AGM_TinyTanks::PostLogin(APlayerController* NewPlayer)
+{
+    Super::PostLogin(NewPlayer);
+
+    FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
+    TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
+    if (NewPlayer)
+    {
+        if (TObjectPtr<APC_TinyTanks> PC_TinyTank{ Cast<APC_TinyTanks>(NewPlayer) })
+        {
+            TinyTankCharacter->SetOwner(PC_TinyTank);
+            PC_TinyTank->SetTinyTankCharacter(TinyTankCharacter);
+        }
+    }
+}
+
+void AGM_TinyTanks::ActorDied(const TObjectPtr<AActor> DeadActor)
+{
+    if (DeadActor && DeadActor->Tags.Contains(TinyTankTag))
+    {
+        if (TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(DeadActor))
+        {
+            TObjectPtr<APlayerController> TinyTankController{ Cast<APlayerController>(TinyTankCharacter->GetController()) };
+            TinyTankCharacter->HandleDestruction();
+            FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
+            TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
+        }
+    }
+}
+
+void AGM_TinyTanks::ActorScored(const TObjectPtr<APlayerController> ScoredActorController)
+{
+    if (ScoredActorController)
+    {
+        UpdateKillingScore(ScoredActorController);
+    }
 }
 
 int AGM_TinyTanks::GetMaterialID()
@@ -24,44 +62,6 @@ int AGM_TinyTanks::GetMaterialID()
     }
 
     return MaterialID;
-}
-
-void AGM_TinyTanks::ActorDied(const TObjectPtr<AActor> DeadActor)
-{
-    if (DeadActor && DeadActor->Tags.Contains(TinyTankTag))
-    {
-        if (TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(DeadActor))
-        {
-            TObjectPtr<APlayerController> TinyTankController{ Cast<APlayerController>(TinyTankCharacter->GetController()) };
-            TinyTankCharacter->HandleDestruction();
-            FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
-            TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
-            PossessTinyTank(TinyTankController, TinyTankCharacter);
-        }
-    }
-}
-
-void AGM_TinyTanks::PostLogin(APlayerController* NewPlayer)
-{
-    FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
-    TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
-    PossessTinyTank(NewPlayer, TinyTankCharacter);
-}
-
-void AGM_TinyTanks::PossessTinyTank(const TObjectPtr<APlayerController> PossessWith, const TObjectPtr<APawn> PossessWho)
-{
-    if (PossessWith)
-    {
-        PossessWith->Possess(PossessWho);
-    }
-}
-
-void AGM_TinyTanks::ActorScored(const TObjectPtr<APlayerController> ScoredActorController)
-{
-    if (ScoredActorController)
-    {
-        UpdateKillingScore(ScoredActorController);
-    }
 }
 
 void AGM_TinyTanks::MakeListOfMaterialsID()

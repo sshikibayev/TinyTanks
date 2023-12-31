@@ -5,8 +5,6 @@
 
 #include "Character/PC_TinyTanks.h"
 #include "Kismet/GamePlayStatics.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI/TinyTankAICharacter.h"
 #include "AI/PC_AIController.h"
@@ -15,17 +13,6 @@
 ATinyTankCharacter::ATinyTankCharacter()
 {
     SetupMovementSettings();
-
-    SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring arm"));
-    SpringArm->SetupAttachment(GetRootComponent());
-    SpringArm->SetUsingAbsoluteRotation(true);
-    SpringArm->TargetArmLength = TargetArmLength;
-    SpringArm->SetRelativeRotation(RelativeRotation);
-    SpringArm->bDoCollisionTest = false;
-
-    Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-    Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-    Camera->bUsePawnControlRotation = false;
 
     BaseMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Base mesh"));
     BaseMeshComponent->SetupAttachment(GetRootComponent());
@@ -76,9 +63,9 @@ void ATinyTankCharacter::OnRep_UpdateColor()
 
 void ATinyTankCharacter::SetColorID()
 {
-    if (TObjectPtr<APC_TinyTanks> PC_TinyTank = Cast<APC_TinyTanks>(GetController()))
+    if (TObjectPtr<APC_AIController> PC_AITinyTank = Cast<APC_AIController>(GetController()))
     {
-        MaterialID = PC_TinyTank->GetColorID();
+        MaterialID = PC_AITinyTank->GetColorID();
     }
 }
 
@@ -102,26 +89,6 @@ void ATinyTankCharacter::ApplyMeshesColor(const int NewMaterialID)
     }
 }
 
-void ATinyTankCharacter::CreatePawnAI()
-{
-    //FActorSpawnParameters SpawnParameters;
-    //SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    //SpawnParameters.Owner = this;
-    //TinyTankAICharacter = GetWorld()->SpawnActor<ATinyTankAICharacter>
-    //    (
-    //        TinyTankAICharacterClass,
-    //        GetActorLocation() + FVector(80.0f, 80.0f, 0.0f),
-    //        GetActorRotation(),
-    //        SpawnParameters
-    //    );
-
-    //if (TinyTankAICharacter)
-    //{
-    //    TinyTankAICharacter->PossessCreatedAIPawn(TinyTankAICharacter);
-    //    //TinyTankAICharacter->GetRootComponent()->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-    //}
-}
-
 void ATinyTankCharacter::SetupMovementSettings()
 {
     GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -131,8 +98,6 @@ void ATinyTankCharacter::SetupMovementSettings()
 
 void ATinyTankCharacter::DetachComponent()
 {
-    SpringArm->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-    Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
     BaseMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
     TurretMeshComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
     ProjectileSpawnPoint->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
