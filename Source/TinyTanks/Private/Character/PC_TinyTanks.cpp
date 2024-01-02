@@ -79,6 +79,11 @@ void APC_TinyTanks::ScoreboardInitialization()
     }
 }
 
+void APC_TinyTanks::SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
+{
+    TinyTankCharacter = NewTinyTankCharacter;
+}
+
 void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
 {
     if (WBP_Scoreboard)

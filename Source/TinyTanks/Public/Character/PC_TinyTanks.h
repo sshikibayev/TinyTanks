@@ -23,15 +23,12 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 public:
     APC_TinyTanks();
 
-    FORCEINLINE void SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
-    {
-        TinyTankCharacter = NewTinyTankCharacter;
-    }
-
     FORCEINLINE TObjectPtr<ATinyTankCharacter> GetTinyTankCharacter()
     {
         return TinyTankCharacter;
     }
+
+    void SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter);
 
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
 

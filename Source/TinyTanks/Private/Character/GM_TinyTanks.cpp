@@ -12,20 +12,19 @@ AGM_TinyTanks::AGM_TinyTanks()
     MakeListOfSpawnPoints();
 }
 
+APlayerController* AGM_TinyTanks::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+    TObjectPtr<APlayerController> CreatedPlayerController{ Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage) };
+
+    CharacterInitialization(CreatedPlayerController);
+
+    return CreatedPlayerController;
+}
+
 void AGM_TinyTanks::PostLogin(APlayerController* NewPlayer)
 {
     Super::PostLogin(NewPlayer);
 
-    FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
-    TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
-    if (NewPlayer)
-    {
-        if (TObjectPtr<APC_TinyTanks> PC_TinyTank{ Cast<APC_TinyTanks>(NewPlayer) })
-        {
-            TinyTankCharacter->SetOwner(PC_TinyTank);
-            PC_TinyTank->SetTinyTankCharacter(TinyTankCharacter);
-        }
-    }
 }
 
 void AGM_TinyTanks::ActorDied(const TObjectPtr<AActor> DeadActor)
@@ -62,6 +61,20 @@ int AGM_TinyTanks::GetMaterialID()
     }
 
     return MaterialID;
+}
+
+void AGM_TinyTanks::CharacterInitialization(const TObjectPtr<APlayerController> CreatedController)
+{
+    FTransform ValidSpawnPoint{ GetValidSpawnPoint() };
+    TObjectPtr<ATinyTankCharacter> TinyTankCharacter = Cast<ATinyTankCharacter>(GetSpawnedCharacter(ValidSpawnPoint));
+    if (CreatedController)
+    {
+        if (TObjectPtr<APC_TinyTanks> PC_TinyTank{ Cast<APC_TinyTanks>(CreatedController) })
+        {
+            TinyTankCharacter->SetOwner(PC_TinyTank);
+            PC_TinyTank->SetTinyTankCharacter(TinyTankCharacter);
+        }
+    }
 }
 
 void AGM_TinyTanks::MakeListOfMaterialsID()

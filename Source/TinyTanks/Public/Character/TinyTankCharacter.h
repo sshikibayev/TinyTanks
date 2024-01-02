@@ -72,6 +72,7 @@ private:
     void OnRep_UpdateColor();
 
     void SetColorID();
+    void AttachA(const TObjectPtr<AActor> Attached);
     void ApplyMeshesColor(const int NewMaterialID);
     void SetupMovementSettings();
     void DetachComponent();

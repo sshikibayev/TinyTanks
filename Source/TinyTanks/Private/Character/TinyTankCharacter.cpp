@@ -69,6 +69,16 @@ void ATinyTankCharacter::SetColorID()
     }
 }
 
+void ATinyTankCharacter::AttachA(const TObjectPtr<AActor> Attached)
+{
+    if (Attached)
+    {
+        Attached->SetActorRotation(GetActorRotation());
+        Attached->SetActorLocation(FVector::ZeroVector);
+        Attached->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+    }
+}
+
 void ATinyTankCharacter::HandleDestruction()
 {
     SetActorHiddenInGame(true);

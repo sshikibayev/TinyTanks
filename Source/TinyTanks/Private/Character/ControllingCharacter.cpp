@@ -20,6 +20,8 @@ AControllingCharacter::AControllingCharacter()
     SpringArm->TargetArmLength = TargetArmLength;
     SpringArm->SetRelativeRotation(RelativeRotation);
     SpringArm->bDoCollisionTest = false;
+    SpringArm->bEnableCameraLag = true;
+    SpringArm->bEnableCameraRotationLag = true;
     SpringArm->SetWorldRotation(FRotator(-60.0f, 0.0f, 0.0f));
 
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
@@ -48,14 +50,6 @@ void AControllingCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (HasAuthority())
-    {
-        if (PC_TinyTanks->GetTinyTankCharacter() && !bDoneOnce)
-        {
-            bDoneOnce = true;
-            AttachTo(PC_TinyTanks->GetTinyTankCharacter());
-        }
-    }
 }
 
 void AControllingCharacter::PossessedBy(AController* NewController)
@@ -63,6 +57,7 @@ void AControllingCharacter::PossessedBy(AController* NewController)
     Super::PossessedBy(NewController);
 
     PC_TinyTanks = Cast<APC_TinyTanks>(GetController());
+    OnAttachTo();
 }
 
 void AControllingCharacter::Destroyed()
@@ -71,6 +66,17 @@ void AControllingCharacter::Destroyed()
     Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
 
     Super::Destroyed();
+}
+
+void AControllingCharacter::OnAttachTo()
+{
+    if (HasAuthority())
+    {
+        if (PC_TinyTanks)
+        {
+            AttachTo(PC_TinyTanks->GetTinyTankCharacter());
+        }
+    }
 }
 
 void AControllingCharacter::AttachTo(const TObjectPtr<AActor> Parent)

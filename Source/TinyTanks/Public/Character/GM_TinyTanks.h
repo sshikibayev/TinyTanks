@@ -23,6 +23,7 @@ public:
     void ActorScored(const TObjectPtr<APlayerController> ScoredActorController);
 
 protected:
+    virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage);
     virtual void PostLogin(APlayerController* NewPlayer) override;
 
 private:
@@ -36,6 +37,7 @@ private:
     int TotalMaterials{ 4 };
     TArray<int> ListOfMaterialsID;
 
+    void CharacterInitialization(const TObjectPtr<APlayerController> CreatedController);
     void MakeListOfMaterialsID();
     void MakeListOfSpawnPoints();
     void UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController);

@@ -35,9 +35,11 @@ private:
     TObjectPtr<UCameraComponent> Camera;
 
     TObjectPtr<APC_TinyTanks> PC_TinyTanks;
-    bool bDoneOnce{ false };
     const float TargetArmLength{ 800.0f };
     const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
+
+    UFUNCTION()
+    void OnAttachTo();
 
     void AttachTo(const TObjectPtr<AActor> Parent);
 };
