@@ -26,6 +26,5 @@ protected:
 private:
     int ColorID{ 0 };
 
-    void SetColorID();
     void PathFindingRefresh();
 };

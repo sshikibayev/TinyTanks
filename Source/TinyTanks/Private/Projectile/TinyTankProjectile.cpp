@@ -56,7 +56,7 @@ void ATinyTankProjectile::Destroyed()
 //*Killer - is a APlayerController;
 void ATinyTankProjectile::AddScoreForKilling(const TObjectPtr<AActor> Killer)
 {
-    if (GetOwner()->HasAuthority() && GM_TinyTanks)
+    if (GetOwner() && GetOwner()->HasAuthority() && GM_TinyTanks)
     {
         GM_TinyTanks->ActorScored(Cast<APlayerController>(Killer));
     }

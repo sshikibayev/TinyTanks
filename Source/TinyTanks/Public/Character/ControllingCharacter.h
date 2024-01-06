@@ -34,7 +34,9 @@ private:
     UPROPERTY(EditAnywhere, Category = "Components")
     TObjectPtr<UCameraComponent> Camera;
 
+    UPROPERTY()
     TObjectPtr<APC_TinyTanks> PC_TinyTanks;
+
     const float TargetArmLength{ 800.0f };
     const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
 

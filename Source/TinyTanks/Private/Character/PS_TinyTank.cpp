@@ -9,7 +9,18 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "Character/GI_TinyTanks.h"
+#include "Character/GM_TinyTanks.h"
 #include "Net/UnrealNetwork.h"
+
+void APS_TinyTank::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
+    {
+        ColorID = GM_TinyTanks->GetMaterialID();
+    }
+}
 
 void APS_TinyTank::BeginPlay()
 {
@@ -54,7 +65,7 @@ void APS_TinyTank::InitializePlayerDataWidgetToScoreboard()
             }
         }
     }
-    else if(GetPlayerController() && GetPlayerController()->GetNetMode() == ENetMode::NM_DedicatedServer)
+    else if (GetPlayerController() && GetPlayerController()->GetNetMode() == ENetMode::NM_DedicatedServer)
     {
         auto GameInstance = Cast<UGI_TinyTanks>(GetGameInstance());
         if (GameInstance)
@@ -76,7 +87,6 @@ void APS_TinyTank::SetPlayerNickname(const FText& NewName)
     PlayerNickname = NewName;
     WidgetDataUpdate();
 }
-
 
 void APS_TinyTank::OnRep_UpdateScore()
 {

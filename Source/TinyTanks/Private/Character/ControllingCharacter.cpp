@@ -27,7 +27,7 @@ AControllingCharacter::AControllingCharacter()
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
     Camera->bUsePawnControlRotation = false;
-    Camera->FieldOfView = 80.0f;
+    Camera->FieldOfView = 90.0f;
 
     GetMesh()->SetEnableGravity(false);
     GetMesh()->SetCollisionProfileName(FName(TEXT("OverlapAll")));
@@ -49,7 +49,6 @@ void AControllingCharacter::BeginPlay()
 void AControllingCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
 }
 
 void AControllingCharacter::PossessedBy(AController* NewController)
@@ -57,7 +56,10 @@ void AControllingCharacter::PossessedBy(AController* NewController)
     Super::PossessedBy(NewController);
 
     PC_TinyTanks = Cast<APC_TinyTanks>(GetController());
-    OnAttachTo();
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterSpawn.AddDynamic(this, &ThisClass::OnAttachTo);
+    }
 }
 
 void AControllingCharacter::Destroyed()

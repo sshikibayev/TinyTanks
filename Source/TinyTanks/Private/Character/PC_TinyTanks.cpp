@@ -15,9 +15,10 @@
 #include "Widgets/Scoreboard/W_PlayerData.h"
 #include "Kismet/GamePlayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
-#include "Character/GM_TinyTanks.h"
 #include "AI/PC_AIController.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 
 APC_TinyTanks::APC_TinyTanks()
 {
@@ -55,17 +56,24 @@ void APC_TinyTanks::SetupInputComponent()
 void APC_TinyTanks::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+
     if (!HasAuthority() && bContinuesMovementHold)
     {
-        ServerMakeContinuesMovement(CachedDestination);
+        ServerStartContinuesMovement(CachedDestination);
     }
+}
+
+void APC_TinyTanks::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+
+    CharacterSpawned();
 }
 
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-    //DOREPLIFETIME(ThisClass, TinyTankCharacter);
 }
 
 void APC_TinyTanks::ScoreboardInitialization()
@@ -82,6 +90,12 @@ void APC_TinyTanks::ScoreboardInitialization()
 void APC_TinyTanks::SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
 {
     TinyTankCharacter = NewTinyTankCharacter;
+    OnSpawnEventBind();
+}
+
+void APC_TinyTanks::CharacterSpawned()
+{
+    OnCharacterSpawn.Broadcast();
 }
 
 void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
@@ -167,7 +181,7 @@ void APC_TinyTanks::OnSetDestinationTriggered()
     }
 }
 
-void APC_TinyTanks::ServerMakeContinuesMovement_Implementation(const FVector& Destination)
+void APC_TinyTanks::ServerStartContinuesMovement_Implementation(const FVector& Destination)
 {
     ContinuesMovement(Destination);
 }
@@ -182,7 +196,7 @@ void APC_TinyTanks::ContinuesMovement(const FVector& Destination)
     if (TinyTankCharacter)
     {
         FVector WorldDirection = (Destination - TinyTankCharacter->GetActorLocation()).GetSafeNormal();
-        TinyTankCharacter->AddMovementInput(WorldDirection, 1.0, false);
+        TinyTankCharacter->AddMovementInput(WorldDirection);
     }
 }
 
@@ -217,6 +231,14 @@ void APC_TinyTanks::SmartMovement(const FVector& Destination)
         {
             PC_AI->SmartMoveToLocation(Destination);
         }
+    }
+}
+
+void APC_TinyTanks::OnSpawnEventBind()
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->OnSpawn.AddDynamic(this, &ThisClass::CharacterSpawned);
     }
 }
 
@@ -257,10 +279,10 @@ void APC_TinyTanks::DrawDebugRayFromMouseClick()
     FVector WorldLocation;
     FVector WorldDirection;
     DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
-    FVector TraceEnd = WorldLocation + WorldDirection * 10000.0f; // Adjust the distance as needed
+    FVector TraceEnd = WorldLocation + WorldDirection * 10000.0f;
     FHitResult HitResult;
     FCollisionQueryParams CollisionParams;
-    CollisionParams.AddIgnoredActor(this); // Ignore the player controller itself
+    CollisionParams.AddIgnoredActor(this);
     if (GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, TraceEnd, ECC_GameTraceChannel10, CollisionParams))
     {
         DrawDebugLine(GetWorld(), WorldLocation, HitResult.ImpactPoint, FColor::Green, false, -1, 0, 1);

@@ -14,7 +14,6 @@ void APC_AIController::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
 
-    SetColorID();
 }
 
 void APC_AIController::BeginPlay()
@@ -22,14 +21,6 @@ void APC_AIController::BeginPlay()
     Super::BeginPlay();
 
     PathFindingRefresh();
-}
-
-void APC_AIController::SetColorID()
-{
-    if (auto GM_TinyTanks = Cast<AGM_TinyTanks>(UGameplayStatics::GetGameMode(this)))
-    {
-        ColorID = GM_TinyTanks->GetMaterialID();
-    }
 }
 
 void APC_AIController::PathFindingRefresh()

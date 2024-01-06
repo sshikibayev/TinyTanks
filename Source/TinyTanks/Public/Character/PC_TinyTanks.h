@@ -15,6 +15,8 @@ class UW_PlayerData;
 class UW_Scoreboard;
 class ATinyTankCharacter;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterSpawn);
+
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
 {
@@ -23,13 +25,14 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 public:
     APC_TinyTanks();
 
+    FOnCharacterSpawn OnCharacterSpawn;
+
     FORCEINLINE TObjectPtr<ATinyTankCharacter> GetTinyTankCharacter()
     {
         return TinyTankCharacter;
     }
 
     void SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter);
-
     void AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget);
 
 protected:
@@ -37,47 +40,44 @@ protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void OnPossess(APawn* InPawn) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-    void OnInputStarted();
-    void OnSetDestinationTriggered();
-    void OnSetDestinationReleased();
-
+    UFUNCTION()
+    virtual void CharacterSpawned();
     UFUNCTION()
     void OnFirePressed();
     UFUNCTION()
     void StopFire();
 
+    void OnInputStarted();
+    void OnSetDestinationTriggered();
+    void OnSetDestinationReleased();
+
 private:
     UPROPERTY(EditAnywhere, Category = Input)
     float ShortPressThreshold{ 0.25f };
-
-    bool bContinuesMovementHold{ false };
-
     UPROPERTY(EditAnywhere, Category = Input)
     TObjectPtr<UNiagaraSystem> FXCursor;
-
     UPROPERTY(EditAnywhere, Category = Input)
     TSoftObjectPtr<UInputMappingContext> IMC_TinyTanks;
-
     UPROPERTY(EditAnywhere, Category = Input)
     TSoftObjectPtr<UInputAction> IA_SetDestinationByClick;
-
     UPROPERTY(EditAnywhere, Category = Input)
     TSoftObjectPtr<UInputAction> IA_Fire;
-
     UPROPERTY(EditAnywhere, Category = Widget)
     TSubclassOf<UW_Scoreboard> ScoreboardClass;
-    TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
-
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
 
     UPROPERTY()
+    TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
+    UPROPERTY()
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-    UPROPERTY(Replicated)
+    UPROPERTY()
     TObjectPtr<ATinyTankCharacter> TinyTankCharacter;
 
+    bool bContinuesMovementHold{ false };
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
@@ -89,10 +89,11 @@ private:
     UFUNCTION(Server, Unreliable)
     void ServerStopMovement();
     UFUNCTION(Server, Unreliable)
-    void ServerMakeContinuesMovement(const FVector& Destination);
+    void ServerStartContinuesMovement(const FVector& Destination);
     UFUNCTION(Server, Unreliable)
     void ServerSmartMove(const FVector& Destination);
 
+    void OnSpawnEventBind();
     void ContinuesMovement(const FVector& Destination);
     void SmartMovement(const FVector& Destination);
     void SetupInputMode();

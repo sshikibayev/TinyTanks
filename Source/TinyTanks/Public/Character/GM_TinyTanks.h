@@ -18,9 +18,9 @@ class TINYTANKS_API AGM_TinyTanks : public AGameMode
 public:
     AGM_TinyTanks();
 
-    int GetMaterialID();
     void ActorDied(const TObjectPtr<AActor> DeadActor);
     void ActorScored(const TObjectPtr<APlayerController> ScoredActorController);
+    int GetMaterialID();
 
 protected:
     virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage);
@@ -37,7 +37,7 @@ private:
     int TotalMaterials{ 4 };
     TArray<int> ListOfMaterialsID;
 
-    void CharacterInitialization(const TObjectPtr<APlayerController> CreatedController);
+    void CharacterInitialization(const TObjectPtr<APlayerController> MainController);
     void MakeListOfMaterialsID();
     void MakeListOfSpawnPoints();
     void UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController);

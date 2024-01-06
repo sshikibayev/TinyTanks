@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI/TinyTankAICharacter.h"
 #include "AI/PC_AIController.h"
+#include "Character/PS_TinyTank.h"
 #include "Net/UnrealNetwork.h"
 
 ATinyTankCharacter::ATinyTankCharacter()
@@ -30,23 +31,42 @@ ATinyTankCharacter::ATinyTankCharacter()
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
 
+    if (GetCharacterMovement())
+    {
+        GetCharacterMovement()->MaxWalkSpeed = MaxSpeed;
+    }
+
     Tags.Emplace(TinyTankTag);
+
+    OnSpawn.AddDynamic(this, &ThisClass::OnApplyNewMaterial);
+}
+
+void ATinyTankCharacter::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
 }
 
 void ATinyTankCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+}
+
+void ATinyTankCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    if (HasAuthority())
+    {
+        InitializeOnSpawnEvent();
+    }
 }
 
 void ATinyTankCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
-    SetColorID();
-    if (GetNetMode() != ENetMode::NM_DedicatedServer)
-    {
-        ApplyMeshesColor(MaterialID);
-    }
 }
 
 void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -58,25 +78,7 @@ void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 void ATinyTankCharacter::OnRep_UpdateColor()
 {
-    ApplyMeshesColor(MaterialID);
-}
-
-void ATinyTankCharacter::SetColorID()
-{
-    if (TObjectPtr<APC_AIController> PC_AITinyTank = Cast<APC_AIController>(GetController()))
-    {
-        MaterialID = PC_AITinyTank->GetColorID();
-    }
-}
-
-void ATinyTankCharacter::AttachA(const TObjectPtr<AActor> Attached)
-{
-    if (Attached)
-    {
-        Attached->SetActorRotation(GetActorRotation());
-        Attached->SetActorLocation(FVector::ZeroVector);
-        Attached->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
-    }
+    ApplyMaterial(MaterialID);
 }
 
 void ATinyTankCharacter::HandleDestruction()
@@ -90,7 +92,37 @@ void ATinyTankCharacter::HandleDestruction()
     Destroy();
 }
 
-void ATinyTankCharacter::ApplyMeshesColor(const int NewMaterialID)
+void ATinyTankCharacter::OnApplyNewMaterial()
+{
+    if (HasAuthority())
+    {
+        SetMaterialID();
+    }
+
+    if (GetNetMode() != ENetMode::NM_DedicatedServer)
+    {
+        ApplyMaterial(MaterialID);
+    }
+}
+
+void ATinyTankCharacter::InitializeOnSpawnEvent()
+{
+    if (bToggleOnSpawnEvent && MainController && MainController->GetOwner() && MainPlayerState)
+    {
+        bToggleOnSpawnEvent = !bToggleOnSpawnEvent;
+        OnSpawn.Broadcast();
+    }
+}
+
+void ATinyTankCharacter::SetMaterialID()
+{
+    if (MainPlayerState)
+    {
+        MaterialID = MainPlayerState->GetColorID();
+    }
+}
+
+void ATinyTankCharacter::ApplyMaterial(const int NewMaterialID)
 {
     if (BaseMeshComponent && TurretMeshComponent)
     {
