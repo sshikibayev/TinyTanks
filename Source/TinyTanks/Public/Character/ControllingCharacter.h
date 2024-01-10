@@ -38,10 +38,20 @@ private:
     TObjectPtr<APC_TinyTanks> PC_TinyTanks;
 
     const float TargetArmLength{ 800.0f };
+    const FRotator SpringArmRotation{ FRotator(-60.0f, 0.0f, 0.0f) };
+    const float FieldOfView{ 90.0f };
+    const float GravityScale{ 0.0f };
     const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
 
     UFUNCTION()
     void OnAttachTo();
+    UFUNCTION()
+    void OnDetach();
 
     void AttachTo(const TObjectPtr<AActor> Parent);
+
+    void BindOnCharacterSpawnEvent();
+    void BindOnCharacterDeathEvent();
+
+    void RemoveAllBondedEvents();
 };

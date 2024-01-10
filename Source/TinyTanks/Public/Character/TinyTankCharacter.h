@@ -16,6 +16,7 @@ class APC_AIController;
 class APS_TinyTank;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpawn);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
 
 UCLASS()
 class TINYTANKS_API ATinyTankCharacter : public ACharacter
@@ -23,9 +24,10 @@ class TINYTANKS_API ATinyTankCharacter : public ACharacter
     GENERATED_BODY()
 
 public:
-    ATinyTankCharacter();
+    ATinyTankCharacter(const FObjectInitializer& ObjectInitializer);
 
     FOnSpawn OnSpawn;
+    FOnDeath OnDeath;
 
     FORCEINLINE TSubclassOf<ATinyTankProjectile> GetProjectileClass() const
     {
@@ -99,7 +101,9 @@ private:
     TObjectPtr<APS_TinyTank> MainPlayerState;
 
     const FName TinyTankTag{ "TinyTank" };
-    const float MaxSpeed{ 800.0f };
+    const float MaxSpeed{ 1000.0f };
+    const float AccelerationSpeed{ 700.0f };
+
     bool bToggleOnSpawnEvent{ true };
 
     UFUNCTION()
@@ -107,10 +111,14 @@ private:
     UFUNCTION()
     void OnApplyNewMaterial();
 
+    void BindOnMaterialApplyEvent();
     void InitializeOnSpawnEvent();
+    void OnSpawnEventCall();
+    void OnDeadEventCall();
     void SetMaterialID();
     void ApplyMaterial(const int NewMaterialID);
     void SetupMovementSettings();
     void DetachComponent();
+    void RemoveAllBondedEvents();
     void ShowDeathEffects();
 };

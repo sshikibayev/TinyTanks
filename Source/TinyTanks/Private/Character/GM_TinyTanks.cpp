@@ -74,7 +74,7 @@ void AGM_TinyTanks::CharacterInitialization(const TObjectPtr<APlayerController> 
         TinyTankCharacter->SetPlayerState(PC_TinyTank->GetPlayerState<APS_TinyTank>());
         PC_TinyTank->SetTinyTankCharacter(TinyTankCharacter);
 
-        TinyTankCharacter->OnSpawn.Broadcast();
+        //TinyTankCharacter->OnSpawn.Broadcast();
     }
 }
 

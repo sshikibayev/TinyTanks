@@ -13,6 +13,8 @@
 AControllingCharacter::AControllingCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    SetNetDormancy(ENetDormancy::DORM_Awake);
+    SetReplicateMovement(false);
 
     SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring arm"));
     SpringArm->SetupAttachment(GetRootComponent());
@@ -22,18 +24,26 @@ AControllingCharacter::AControllingCharacter()
     SpringArm->bDoCollisionTest = false;
     SpringArm->bEnableCameraLag = true;
     SpringArm->bEnableCameraRotationLag = true;
-    SpringArm->SetWorldRotation(FRotator(-60.0f, 0.0f, 0.0f));
+    SpringArm->SetWorldRotation(SpringArmRotation);
+    SpringArm->PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
+    SpringArm->CameraLagMaxTimeStep = 0.05f;
+    SpringArm->bUseAttachParentBound = true;
 
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
     Camera->bUsePawnControlRotation = false;
-    Camera->FieldOfView = 90.0f;
+    Camera->FieldOfView = FieldOfView;
+    Camera->PrimaryComponentTick.bAllowTickOnDedicatedServer = false;
 
     GetMesh()->SetEnableGravity(false);
     GetMesh()->SetCollisionProfileName(FName(TEXT("OverlapAll")));
+    GetMesh()->bReplicatePhysicsToAutonomousProxy = false;
+
     GetCapsuleComponent()->SetEnableGravity(false);
     GetCapsuleComponent()->SetCollisionProfileName(FName(TEXT("OverlapAll")));
-    GetCharacterMovement()->GravityScale = 0.0f;
+    GetCapsuleComponent()->bReplicatePhysicsToAutonomousProxy = false;
+
+    GetCharacterMovement()->GravityScale = GravityScale;
     SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
     bUseControllerRotationPitch = false;
@@ -49,6 +59,7 @@ void AControllingCharacter::BeginPlay()
 void AControllingCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
 }
 
 void AControllingCharacter::PossessedBy(AController* NewController)
@@ -56,16 +67,15 @@ void AControllingCharacter::PossessedBy(AController* NewController)
     Super::PossessedBy(NewController);
 
     PC_TinyTanks = Cast<APC_TinyTanks>(GetController());
-    if (PC_TinyTanks)
-    {
-        PC_TinyTanks->OnCharacterSpawn.AddDynamic(this, &ThisClass::OnAttachTo);
-    }
+    BindOnCharacterSpawnEvent();
+    BindOnCharacterDeathEvent();
 }
 
 void AControllingCharacter::Destroyed()
 {
     SpringArm->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
     Camera->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+    RemoveAllBondedEvents();
 
     Super::Destroyed();
 }
@@ -81,13 +91,46 @@ void AControllingCharacter::OnAttachTo()
     }
 }
 
+void AControllingCharacter::OnDetach()
+{
+    if (HasAuthority())
+    {
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    }
+}
+
 void AControllingCharacter::AttachTo(const TObjectPtr<AActor> Parent)
 {
-    if (Parent)
+    if (Parent && Parent->GetRootComponent())
     {
-        SetActorRotation(Parent->GetActorRotation());
+        AttachToActor(Parent, FAttachmentTransformRules::KeepWorldTransform);
         SetActorLocation(FVector::ZeroVector);
-        AttachToActor(Parent, FAttachmentTransformRules::KeepRelativeTransform);
+        SetActorRelativeLocation(FVector::ZeroVector);
+    }
+}
+
+void AControllingCharacter::BindOnCharacterSpawnEvent()
+{
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterSpawn.AddDynamic(this, &ThisClass::OnAttachTo);
+    }
+}
+
+void AControllingCharacter::BindOnCharacterDeathEvent()
+{
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterDeath.AddDynamic(this, &ThisClass::OnDetach);
+    }
+}
+
+void AControllingCharacter::RemoveAllBondedEvents()
+{
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterSpawn.RemoveDynamic(this, &ThisClass::OnAttachTo);
+        PC_TinyTanks->OnCharacterDeath.RemoveDynamic(this, &ThisClass::OnDetach);
     }
 }
 

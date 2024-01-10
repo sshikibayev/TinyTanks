@@ -57,23 +57,26 @@ void APC_TinyTanks::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    if (!HasAuthority() && bContinuesMovementHold)
-    {
-        ServerStartContinuesMovement(CachedDestination);
-    }
 }
 
 void APC_TinyTanks::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
-    CharacterSpawned();
 }
 
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+    DOREPLIFETIME(ThisClass, TinyTankCharacter);
+}
+
+void APC_TinyTanks::Destroyed()
+{
+    RemoveAllBondedEvents();
+
+    Super::Destroyed();
 }
 
 void APC_TinyTanks::ScoreboardInitialization()
@@ -90,12 +93,18 @@ void APC_TinyTanks::ScoreboardInitialization()
 void APC_TinyTanks::SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
 {
     TinyTankCharacter = NewTinyTankCharacter;
-    OnSpawnEventBind();
+    BindOnSpawnEvent();
+    BindOnDeadEvent();
 }
 
 void APC_TinyTanks::CharacterSpawned()
 {
     OnCharacterSpawn.Broadcast();
+}
+
+void APC_TinyTanks::CharacterDead()
+{
+    OnCharacterDeath.Broadcast();
 }
 
 void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
@@ -171,13 +180,13 @@ void APC_TinyTanks::OnSetDestinationTriggered()
         CachedDestination = Hit.Location;
     }
 
-    if (HasAuthority())
+    if (!HasAuthority())
     {
-        ContinuesMovement(CachedDestination);
+        ServerStartContinuesMovement(CachedDestination);
     }
     else
     {
-        bContinuesMovementHold = true;
+        ContinuesMovement(CachedDestination);
     }
 }
 
@@ -204,7 +213,6 @@ void APC_TinyTanks::OnSetDestinationReleased()
 {
     OneTouchAction();
     FollowTime = 0.f;
-    bContinuesMovementHold = false;
 }
 
 void APC_TinyTanks::OneTouchAction()
@@ -213,7 +221,14 @@ void APC_TinyTanks::OneTouchAction()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
-        ServerSmartMove(CachedDestination);
+        if (!HasAuthority())
+        {
+            ServerSmartMove(CachedDestination);
+        }
+        else
+        {
+            SmartMovement(CachedDestination);
+        }
     }
 }
 
@@ -234,11 +249,19 @@ void APC_TinyTanks::SmartMovement(const FVector& Destination)
     }
 }
 
-void APC_TinyTanks::OnSpawnEventBind()
+void APC_TinyTanks::BindOnSpawnEvent()
 {
     if (TinyTankCharacter)
     {
         TinyTankCharacter->OnSpawn.AddDynamic(this, &ThisClass::CharacterSpawned);
+    }
+}
+
+void APC_TinyTanks::BindOnDeadEvent()
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->OnDeath.AddDynamic(this, &ThisClass::CharacterDead);
     }
 }
 
@@ -272,6 +295,15 @@ void APC_TinyTanks::ServerHandleFire_Implementation()
 void APC_TinyTanks::StopFire()
 {
     bFiringWeapon = false;
+}
+
+void APC_TinyTanks::RemoveAllBondedEvents()
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->OnSpawn.RemoveDynamic(this, &ThisClass::CharacterSpawned);
+        TinyTankCharacter->OnDeath.RemoveDynamic(this, &ThisClass::CharacterDead);
+    }
 }
 
 void APC_TinyTanks::DrawDebugRayFromMouseClick()

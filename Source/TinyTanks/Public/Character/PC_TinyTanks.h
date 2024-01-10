@@ -16,6 +16,7 @@ class UW_Scoreboard;
 class ATinyTankCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterSpawn);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCharacterDeath);
 
 UCLASS()
 class TINYTANKS_API APC_TinyTanks : public APlayerController
@@ -26,6 +27,7 @@ public:
     APC_TinyTanks();
 
     FOnCharacterSpawn OnCharacterSpawn;
+    FOnCharacterDeath OnCharacterDeath;
 
     FORCEINLINE TObjectPtr<ATinyTankCharacter> GetTinyTankCharacter()
     {
@@ -42,9 +44,12 @@ protected:
     virtual void Tick(float DeltaSeconds) override;
     virtual void OnPossess(APawn* InPawn) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void Destroyed() override;
 
     UFUNCTION()
     virtual void CharacterSpawned();
+    UFUNCTION()
+    virtual void CharacterDead();
     UFUNCTION()
     void OnFirePressed();
     UFUNCTION()
@@ -74,10 +79,9 @@ private:
     TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
     UPROPERTY()
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-    UPROPERTY()
+    UPROPERTY(Replicated)
     TObjectPtr<ATinyTankCharacter> TinyTankCharacter;
 
-    bool bContinuesMovementHold{ false };
     FVector CachedDestination;
     float FollowTime{ 0.0f };
     bool bFiringWeapon{ false };
@@ -87,13 +91,14 @@ private:
     UFUNCTION(Server, Reliable)
     void ServerHandleFire();
     UFUNCTION(Server, Unreliable)
-    void ServerStopMovement();
-    UFUNCTION(Server, Unreliable)
     void ServerStartContinuesMovement(const FVector& Destination);
     UFUNCTION(Server, Unreliable)
     void ServerSmartMove(const FVector& Destination);
+    UFUNCTION(Server, Unreliable)
+    void ServerStopMovement();
 
-    void OnSpawnEventBind();
+    void BindOnSpawnEvent();
+    void BindOnDeadEvent();
     void ContinuesMovement(const FVector& Destination);
     void SmartMovement(const FVector& Destination);
     void SetupInputMode();
@@ -102,5 +107,6 @@ private:
     void PrepareInputSubsystem();
     void AddingMappingContext(TObjectPtr<UEnhancedInputLocalPlayerSubsystem> Subsystem, const TSoftObjectPtr<UInputMappingContext> MappingContext);
     void BindInputActions();
+    void RemoveAllBondedEvents();
     void DrawDebugRayFromMouseClick();
 };
