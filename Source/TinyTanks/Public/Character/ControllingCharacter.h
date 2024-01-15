@@ -44,14 +44,13 @@ private:
     const FRotator RelativeRotation{ FRotator((-60.0f, 0.0f, 0.0f)) };
 
     UFUNCTION()
-    void OnAttachTo();
+    void OnTinyTankSpawn();
     UFUNCTION()
-    void OnDetach();
-
-    void AttachTo(const TObjectPtr<AActor> Parent);
+    void OnTinyTankDeath();
 
     void BindOnCharacterSpawnEvent();
     void BindOnCharacterDeathEvent();
-
     void RemoveAllBondedEvents();
+    void AttachTo(const TObjectPtr<AActor> Parent);
+    void Detach();
 };

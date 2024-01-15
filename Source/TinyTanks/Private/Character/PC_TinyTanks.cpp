@@ -93,8 +93,29 @@ void APC_TinyTanks::ScoreboardInitialization()
 void APC_TinyTanks::SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
 {
     TinyTankCharacter = NewTinyTankCharacter;
+    SpawnedCharacterInitialization();
+}
+
+void APC_TinyTanks::SpawnedCharacterInitialization()
+{
     BindOnSpawnEvent();
     BindOnDeadEvent();
+}
+
+void APC_TinyTanks::BindOnSpawnEvent()
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->OnSpawn.AddDynamic(this, &ThisClass::CharacterSpawned);
+    }
+}
+
+void APC_TinyTanks::BindOnDeadEvent()
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->OnDeath.AddDynamic(this, &ThisClass::CharacterDead);
+    }
 }
 
 void APC_TinyTanks::CharacterSpawned()
@@ -104,7 +125,18 @@ void APC_TinyTanks::CharacterSpawned()
 
 void APC_TinyTanks::CharacterDead()
 {
+    RemoveAllBondedEvents();
+
     OnCharacterDeath.Broadcast();
+}
+
+void APC_TinyTanks::RemoveAllBondedEvents()
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->OnSpawn.RemoveDynamic(this, &ThisClass::CharacterSpawned);
+        TinyTankCharacter->OnDeath.RemoveDynamic(this, &ThisClass::CharacterDead);
+    }
 }
 
 void APC_TinyTanks::AddToScoreboard(const TObjectPtr<UW_PlayerData> Widget)
@@ -249,22 +281,6 @@ void APC_TinyTanks::SmartMovement(const FVector& Destination)
     }
 }
 
-void APC_TinyTanks::BindOnSpawnEvent()
-{
-    if (TinyTankCharacter)
-    {
-        TinyTankCharacter->OnSpawn.AddDynamic(this, &ThisClass::CharacterSpawned);
-    }
-}
-
-void APC_TinyTanks::BindOnDeadEvent()
-{
-    if (TinyTankCharacter)
-    {
-        TinyTankCharacter->OnDeath.AddDynamic(this, &ThisClass::CharacterDead);
-    }
-}
-
 void APC_TinyTanks::OnFirePressed()
 {
     if (!bFiringWeapon)
@@ -295,15 +311,6 @@ void APC_TinyTanks::ServerHandleFire_Implementation()
 void APC_TinyTanks::StopFire()
 {
     bFiringWeapon = false;
-}
-
-void APC_TinyTanks::RemoveAllBondedEvents()
-{
-    if (TinyTankCharacter)
-    {
-        TinyTankCharacter->OnSpawn.RemoveDynamic(this, &ThisClass::CharacterSpawned);
-        TinyTankCharacter->OnDeath.RemoveDynamic(this, &ThisClass::CharacterDead);
-    }
 }
 
 void APC_TinyTanks::DrawDebugRayFromMouseClick()

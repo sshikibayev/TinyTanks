@@ -67,6 +67,7 @@ void AControllingCharacter::PossessedBy(AController* NewController)
     Super::PossessedBy(NewController);
 
     PC_TinyTanks = Cast<APC_TinyTanks>(GetController());
+
     BindOnCharacterSpawnEvent();
     BindOnCharacterDeathEvent();
 }
@@ -80,9 +81,34 @@ void AControllingCharacter::Destroyed()
     Super::Destroyed();
 }
 
-//Calls, when TinyTankCharacter has been spawned.
-//It's attached himself to the spawned character.
-void AControllingCharacter::OnAttachTo()
+
+void AControllingCharacter::BindOnCharacterSpawnEvent()
+{
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterSpawn.AddDynamic(this, &ThisClass::OnTinyTankSpawn);
+    }
+}
+
+void AControllingCharacter::BindOnCharacterDeathEvent()
+{
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterDeath.AddDynamic(this, &ThisClass::OnTinyTankDeath);
+    }
+
+}
+
+void AControllingCharacter::RemoveAllBondedEvents()
+{
+    if (PC_TinyTanks)
+    {
+        PC_TinyTanks->OnCharacterSpawn.RemoveDynamic(this, &ThisClass::OnTinyTankSpawn);
+        PC_TinyTanks->OnCharacterDeath.RemoveDynamic(this, &ThisClass::OnTinyTankDeath);
+    }
+}
+
+void AControllingCharacter::OnTinyTankSpawn()
 {
     if (HasAuthority())
     {
@@ -93,14 +119,9 @@ void AControllingCharacter::OnAttachTo()
     }
 }
 
-//Calls, when TinyTankCharacter dead.
-//It's detached himself from the dead character.
-void AControllingCharacter::OnDetach()
+void AControllingCharacter::OnTinyTankDeath()
 {
-    if (HasAuthority())
-    {
-        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-    }
+    Detach();
 }
 
 void AControllingCharacter::AttachTo(const TObjectPtr<AActor> Parent)
@@ -113,28 +134,10 @@ void AControllingCharacter::AttachTo(const TObjectPtr<AActor> Parent)
     }
 }
 
-void AControllingCharacter::BindOnCharacterSpawnEvent()
+void AControllingCharacter::Detach()
 {
-    if (PC_TinyTanks)
+    if (HasAuthority())
     {
-        PC_TinyTanks->OnCharacterSpawn.AddDynamic(this, &ThisClass::OnAttachTo);
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
     }
 }
-
-void AControllingCharacter::BindOnCharacterDeathEvent()
-{
-    if (PC_TinyTanks)
-    {
-        PC_TinyTanks->OnCharacterDeath.AddDynamic(this, &ThisClass::OnDetach);
-    }
-}
-
-void AControllingCharacter::RemoveAllBondedEvents()
-{
-    if (PC_TinyTanks)
-    {
-        PC_TinyTanks->OnCharacterSpawn.RemoveDynamic(this, &ThisClass::OnAttachTo);
-        PC_TinyTanks->OnCharacterDeath.RemoveDynamic(this, &ThisClass::OnDetach);
-    }
-}
-

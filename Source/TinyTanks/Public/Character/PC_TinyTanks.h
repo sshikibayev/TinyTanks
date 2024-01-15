@@ -26,7 +26,9 @@ class TINYTANKS_API APC_TinyTanks : public APlayerController
 public:
     APC_TinyTanks();
 
+    //Calls every time when new character spawned.
     FOnCharacterSpawn OnCharacterSpawn;
+    //Calls every time when character died.
     FOnCharacterDeath OnCharacterDeath;
 
     FORCEINLINE TObjectPtr<ATinyTankCharacter> GetTinyTankCharacter()
@@ -97,6 +99,7 @@ private:
     UFUNCTION(Server, Unreliable)
     void ServerStopMovement();
 
+    void SpawnedCharacterInitialization();
     void BindOnSpawnEvent();
     void BindOnDeadEvent();
     void ContinuesMovement(const FVector& Destination);
