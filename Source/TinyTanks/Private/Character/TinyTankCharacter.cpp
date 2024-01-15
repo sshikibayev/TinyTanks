@@ -75,7 +75,7 @@ void ATinyTankCharacter::PossessedBy(AController* NewController)
 {
     Super::PossessedBy(NewController);
 
-    OnSpawnEventCall();
+    ToggleOnSpawnEvent();
 }
 
 void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -97,7 +97,7 @@ void ATinyTankCharacter::HandleDestruction()
 
     DetachComponent();
     ShowDeathEffects();
-    OnDeadEventCall();
+    OnDeathEventCall();
     RemoveAllBondedEvents();
 
     Destroy();
@@ -121,6 +121,13 @@ void ATinyTankCharacter::BindOnMaterialApplyEvent()
     OnSpawn.AddDynamic(this, &ThisClass::OnApplyNewMaterial);
 }
 
+void ATinyTankCharacter::ToggleOnSpawnEvent()
+{
+    //We toggle this bool, to call InitializeOnSpawnEvent() on Tick function,
+   //to invoke an event OnSpawnEventCall().
+    bToggleOnSpawnEvent = true;
+}
+
 void ATinyTankCharacter::InitializeOnSpawnEvent()
 {
     if (bToggleOnSpawnEvent && MainController && MainController->GetPawn() && MainPlayerState)
@@ -135,7 +142,7 @@ void ATinyTankCharacter::OnSpawnEventCall()
     OnSpawn.Broadcast();
 }
 
-void ATinyTankCharacter::OnDeadEventCall()
+void ATinyTankCharacter::OnDeathEventCall()
 {
     OnDeath.Broadcast();
 }

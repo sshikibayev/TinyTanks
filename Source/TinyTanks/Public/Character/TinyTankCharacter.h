@@ -104,7 +104,7 @@ private:
     const float MaxSpeed{ 1000.0f };
     const float AccelerationSpeed{ 700.0f };
 
-    bool bToggleOnSpawnEvent{ true };
+    bool bToggleOnSpawnEvent{ false };
 
     UFUNCTION()
     void OnRep_UpdateColor();
@@ -112,9 +112,10 @@ private:
     void OnApplyNewMaterial();
 
     void BindOnMaterialApplyEvent();
+    void ToggleOnSpawnEvent();
     void InitializeOnSpawnEvent();
     void OnSpawnEventCall();
-    void OnDeadEventCall();
+    void OnDeathEventCall();
     void SetMaterialID();
     void ApplyMaterial(const int NewMaterialID);
     void SetupMovementSettings();

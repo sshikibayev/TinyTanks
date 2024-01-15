@@ -80,6 +80,8 @@ void AControllingCharacter::Destroyed()
     Super::Destroyed();
 }
 
+//Calls, when TinyTankCharacter has been spawned.
+//It's attached himself to the spawned character.
 void AControllingCharacter::OnAttachTo()
 {
     if (HasAuthority())
@@ -91,6 +93,8 @@ void AControllingCharacter::OnAttachTo()
     }
 }
 
+//Calls, when TinyTankCharacter dead.
+//It's detached himself from the dead character.
 void AControllingCharacter::OnDetach()
 {
     if (HasAuthority())
