@@ -68,8 +68,6 @@ void APC_TinyTanks::OnPossess(APawn* InPawn)
 void APC_TinyTanks::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-    DOREPLIFETIME(ThisClass, TinyTankCharacter);
 }
 
 void APC_TinyTanks::Destroyed()
@@ -93,6 +91,7 @@ void APC_TinyTanks::ScoreboardInitialization()
 void APC_TinyTanks::SetTinyTankCharacter(const TObjectPtr<ATinyTankCharacter> NewTinyTankCharacter)
 {
     TinyTankCharacter = NewTinyTankCharacter;
+
     SpawnedCharacterInitialization();
 }
 
@@ -192,9 +191,17 @@ void APC_TinyTanks::BindInputActions()
 
 void APC_TinyTanks::OnInputStarted()
 {
-    if (HasAuthority() && TinyTankCharacter)
+    StopMovement();
+}
+
+void APC_TinyTanks::StopMovement()
+{
+    if (HasAuthority())
     {
-        TinyTankCharacter->GetController()->StopMovement();
+        if (TinyTankCharacter)
+        {
+            TinyTankCharacter->StopMovement();
+        }
     }
     else
     {
@@ -202,47 +209,62 @@ void APC_TinyTanks::OnInputStarted()
     }
 }
 
+void APC_TinyTanks::ServerStopMovement_Implementation()
+{
+    StopMovement();
+}
+
 void APC_TinyTanks::OnSetDestinationTriggered()
 {
     FollowTime += GetWorld()->GetDeltaSeconds();
 
+    if (!bMovementHolding)
+    {
+        bMovementHolding = true;
+        GetWorld()->GetTimerManager().SetTimer(MovementHoldingTimer, this, &ThisClass::RefreshMovementHold, MovementHoldRate, false);
+
+        CalculateDestination();
+        SetDestinationForTheTinyTank(CachedDestination);
+    }
+}
+
+void APC_TinyTanks::CalculateDestination()
+{
     FHitResult Hit;
     if (GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit))
     {
         CachedDestination = Hit.Location;
     }
+}
 
-    if (!HasAuthority())
+void APC_TinyTanks::ServerSetDestination_Implementation(const FVector& Destination)
+{
+    SetDestinationForTheTinyTank(Destination);
+}
+
+void APC_TinyTanks::SetDestinationForTheTinyTank(const FVector& Destination)
+{
+    //Check is it Listen server or Client,
+    //Dedicated server doesnt exist in this function,
+    //Due to the function was called from input.
+    if (HasAuthority())
     {
-        ServerStartContinuesMovement(CachedDestination);
+        if (TinyTankCharacter)
+        {
+            TinyTankCharacter->ReceiveDestinationForMovement(Destination);
+        }
     }
     else
     {
-        ContinuesMovement(CachedDestination);
-    }
-}
-
-void APC_TinyTanks::ServerStartContinuesMovement_Implementation(const FVector& Destination)
-{
-    ContinuesMovement(Destination);
-}
-
-void APC_TinyTanks::ServerStopMovement_Implementation()
-{
-    TinyTankCharacter->GetController()->StopMovement();
-}
-
-void APC_TinyTanks::ContinuesMovement(const FVector& Destination)
-{
-    if (TinyTankCharacter)
-    {
-        FVector WorldDirection = (Destination - TinyTankCharacter->GetActorLocation()).GetSafeNormal();
-        TinyTankCharacter->AddMovementInput(WorldDirection);
+        //We have to call RPC to set Destination from the DedicatedServer,
+        //Because it's function called from the input.
+        ServerSetDestination(CachedDestination);
     }
 }
 
 void APC_TinyTanks::OnSetDestinationReleased()
 {
+    StopMovement();
     OneTouchAction();
     FollowTime = 0.f;
 }
@@ -253,15 +275,20 @@ void APC_TinyTanks::OneTouchAction()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FXCursor, CachedDestination, FRotator::ZeroRotator, FVector::One(), true, true, ENCPoolMethod::None, true);
 
-        if (!HasAuthority())
-        {
-            ServerSmartMove(CachedDestination);
-        }
-        else
+        if (HasAuthority())
         {
             SmartMovement(CachedDestination);
         }
+        else
+        {
+            ServerSmartMove(CachedDestination);
+        }
     }
+}
+
+void APC_TinyTanks::RefreshMovementHold()
+{
+    bMovementHolding = false;
 }
 
 void APC_TinyTanks::ServerSmartMove_Implementation(const FVector& Destination)
@@ -273,11 +300,7 @@ void APC_TinyTanks::SmartMovement(const FVector& Destination)
 {
     if (TinyTankCharacter)
     {
-        TObjectPtr<APC_AIController> PC_AI{ Cast<APC_AIController>(TinyTankCharacter->GetController()) };
-        if (PC_AI)
-        {
-            PC_AI->SmartMoveToLocation(Destination);
-        }
+        TinyTankCharacter->SmartMovement(Destination);
     }
 }
 

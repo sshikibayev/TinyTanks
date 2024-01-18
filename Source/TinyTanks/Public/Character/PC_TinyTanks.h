@@ -72,38 +72,51 @@ private:
     TSoftObjectPtr<UInputAction> IA_SetDestinationByClick;
     UPROPERTY(EditAnywhere, Category = Input)
     TSoftObjectPtr<UInputAction> IA_Fire;
+
+    UPROPERTY(EditAnywhere, Category = Input)
+    float MovementHoldRate{ 0.01f };
+    FTimerHandle MovementHoldingTimer;
+    bool bMovementHolding{ false };
+
     UPROPERTY(EditAnywhere, Category = Widget)
     TSubclassOf<UW_Scoreboard> ScoreboardClass;
+
     UPROPERTY(EditAnywhere, Category = Combat)
     float FireRate{ 0.25f };
+    FTimerHandle FiringTimer;
+    bool bFiringWeapon{ false };
 
     UPROPERTY()
     TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
     UPROPERTY()
     TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-    UPROPERTY(Replicated)
-    TObjectPtr<ATinyTankCharacter> TinyTankCharacter;
 
+    TObjectPtr<ATinyTankCharacter> TinyTankCharacter;
     FVector CachedDestination;
     float FollowTime{ 0.0f };
-    bool bFiringWeapon{ false };
-    FTimerHandle FiringTimer;
     int ColorID{ 0 };
 
     UFUNCTION(Server, Reliable)
     void ServerHandleFire();
+
+    //Movement RPC's
     UFUNCTION(Server, Unreliable)
-    void ServerStartContinuesMovement(const FVector& Destination);
+    void ServerSetDestination(const FVector& Destination);
     UFUNCTION(Server, Unreliable)
     void ServerSmartMove(const FVector& Destination);
     UFUNCTION(Server, Unreliable)
     void ServerStopMovement();
 
+    UFUNCTION()
+    void RefreshMovementHold();
+
     void SpawnedCharacterInitialization();
     void BindOnSpawnEvent();
     void BindOnDeadEvent();
-    void ContinuesMovement(const FVector& Destination);
+    void CalculateDestination();
+    void SetDestinationForTheTinyTank(const FVector& Destination);
     void SmartMovement(const FVector& Destination);
+    void StopMovement();
     void SetupInputMode();
     void ScoreboardInitialization();
     void OneTouchAction();

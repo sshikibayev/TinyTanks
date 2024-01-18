@@ -64,6 +64,10 @@ public:
         MaterialID = ID;
     }
 
+    void ReceiveDestinationForMovement(const FVector& NewDestination);
+    void SmartMovement(const FVector& NewDestination);
+    void StopMovement();
+
     void HandleDestruction();
 
 protected:
@@ -101,16 +105,23 @@ private:
     TObjectPtr<APS_TinyTank> MainPlayerState;
 
     const FName TinyTankTag{ "TinyTank" };
-    const float MaxSpeed{ 1000.0f };
-    const float AccelerationSpeed{ 700.0f };
-
     bool bToggleOnSpawnEvent{ false };
+
+    //CharacterMovementComponent
+    const float MaxSpeed{ 1000.0f };
+    const float AccelerationSpeed{ 1000.0f };
+    const float Mass{ 0.0f };
+    FVector DirectionToMove{ FVector::ZeroVector };
+    bool bActivateMovement{ false };
+    //
+
 
     UFUNCTION()
     void OnRep_UpdateColor();
     UFUNCTION()
     void OnApplyNewMaterial();
 
+    void ContinuesMovement();
     void BindOnMaterialApplyEvent();
     void ToggleOnSpawnEvent();
     void InitializeOnSpawnEvent();

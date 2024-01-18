@@ -37,7 +37,21 @@ ATinyTankCharacter::ATinyTankCharacter(const FObjectInitializer& ObjectInitializ
     if (GetCharacterMovement())
     {
         GetCharacterMovement()->MaxWalkSpeed = MaxSpeed;
+        GetCharacterMovement()->MaxWalkSpeedCrouched = MaxSpeed;
         GetCharacterMovement()->MaxAcceleration = AccelerationSpeed;
+        GetCharacterMovement()->Mass = Mass;
+        GetCharacterMovement()->bTouchForceScaledToMass = false;
+        GetCharacterMovement()->DefaultLandMovementMode = EMovementMode::MOVE_Walking;
+        GetCharacterMovement()->DefaultWaterMovementMode = EMovementMode::MOVE_None;
+        GetCharacterMovement()->BrakingDecelerationWalking = 0.0f;
+        GetCharacterMovement()->bTickBeforeOwner = false;
+
+        //Networking
+        GetCharacterMovement()->NetworkSmoothingMode = ENetworkSmoothingMode::Linear;
+        GetCharacterMovement()->bNetworkSkipProxyPredictionOnNetUpdate = true;
+        GetCharacterMovement()->NetworkNoSmoothUpdateDistance = 50.0f;
+        GetCharacterMovement()->NetworkMinTimeBetweenClientAckGoodMoves = 0.0f;
+        GetCharacterMovement()->NetworkMinTimeBetweenClientAdjustments = 0.0f;
     }
 
     if (GetCapsuleComponent())
@@ -58,7 +72,6 @@ void ATinyTankCharacter::PostInitializeComponents()
 void ATinyTankCharacter::BeginPlay()
 {
     Super::BeginPlay();
-
 }
 
 void ATinyTankCharacter::Tick(float DeltaSeconds)
@@ -68,6 +81,7 @@ void ATinyTankCharacter::Tick(float DeltaSeconds)
     if (HasAuthority())
     {
         InitializeOnSpawnEvent();
+        ContinuesMovement();
     }
 }
 
@@ -90,6 +104,30 @@ void ATinyTankCharacter::OnRep_UpdateColor()
     ApplyMaterial(MaterialID);
 }
 
+void ATinyTankCharacter::ReceiveDestinationForMovement(const FVector& NewDestination)
+{
+    DirectionToMove = (NewDestination - GetActorLocation()).GetSafeNormal();
+    bActivateMovement = true;
+}
+
+void ATinyTankCharacter::SmartMovement(const FVector& NewDestination)
+{
+    TObjectPtr<APC_AIController> PC_AI{ Cast<APC_AIController>(GetController()) };
+    if (PC_AI)
+    {
+        PC_AI->SmartMoveToLocation(NewDestination);
+    }
+}
+
+void ATinyTankCharacter::StopMovement()
+{
+    if (GetController())
+    {
+        GetController()->StopMovement();
+        bActivateMovement = false;
+    }
+}
+
 void ATinyTankCharacter::HandleDestruction()
 {
     SetActorHiddenInGame(true);
@@ -99,6 +137,7 @@ void ATinyTankCharacter::HandleDestruction()
     ShowDeathEffects();
     OnDeathEventCall();
     RemoveAllBondedEvents();
+    StopMovement();
 
     Destroy();
 }
@@ -113,6 +152,16 @@ void ATinyTankCharacter::OnApplyNewMaterial()
     if (GetNetMode() != ENetMode::NM_DedicatedServer)
     {
         ApplyMaterial(MaterialID);
+    }
+}
+
+
+void ATinyTankCharacter::ContinuesMovement()
+{
+    if (bActivateMovement)
+    {
+        //Doesn't work at the client side. Only from a server.
+        AddMovementInput(DirectionToMove);
     }
 }
 
