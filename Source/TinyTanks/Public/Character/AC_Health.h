@@ -23,7 +23,8 @@ protected:
 
 private:
     UPROPERTY(EditAnywhere);
-    float MaxHealth{ 1.0f };
+    float MaxHealth{ 100.0f };
+
     float Health{ 0.0f };
     TObjectPtr<AGM_TinyTanks> GM_TinyTanks;
 

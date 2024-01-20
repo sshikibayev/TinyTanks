@@ -9,7 +9,6 @@
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Projectile/TinyTankProjectile.h"
 #include "Character/TinyTankCharacter.h"
 #include "Widgets/Scoreboard/W_Scoreboard.h"
 #include "Widgets/Scoreboard/W_PlayerData.h"
@@ -18,6 +17,8 @@
 #include "AI/PC_AIController.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+
 
 
 APC_TinyTanks::APC_TinyTanks()
@@ -185,7 +186,9 @@ void APC_TinyTanks::BindInputActions()
         PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Completed, this, &ThisClass::OnSetDestinationReleased);
         PlayerEnhancedInputComponent->BindAction(IA_SetDestinationByClick.Get(), ETriggerEvent::Canceled, this, &ThisClass::OnSetDestinationReleased);
 
-        PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Started, this, &ThisClass::OnFirePressed);
+        PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Triggered, this, &ThisClass::OnFireHold);
+        PlayerEnhancedInputComponent->BindAction(IA_Fire.Get(), ETriggerEvent::Completed, this, &ThisClass::OnFirePressed);
+
     }
 }
 
@@ -206,6 +209,14 @@ void APC_TinyTanks::StopMovement()
     else
     {
         ServerStopMovement();
+    }
+}
+
+void APC_TinyTanks::AddFireImpulse(const float ForceMultiplier)
+{
+    if (TinyTankCharacter)
+    {
+        TinyTankCharacter->AddFireImpulse(ForceMultiplier);
     }
 }
 
@@ -304,30 +315,29 @@ void APC_TinyTanks::SmartMovement(const FVector& Destination)
     }
 }
 
+void APC_TinyTanks::OnFireHold()
+{
+    FireHoldTime += GetWorld()->GetDeltaSeconds();
+}
+
 void APC_TinyTanks::OnFirePressed()
 {
     if (!bFiringWeapon)
     {
         bFiringWeapon = true;
         GetWorld()->GetTimerManager().SetTimer(FiringTimer, this, &ThisClass::StopFire, FireRate, false);
-        ServerHandleFire();
+        ServerHandleFire(FireHoldTime);
+        FireHoldTime = 0.0f;
     }
 }
 
-void APC_TinyTanks::ServerHandleFire_Implementation()
+void APC_TinyTanks::ServerHandleFire_Implementation(const float NewFireHoldTime)
 {
-    FActorSpawnParameters SpawnParameters;
-    SpawnParameters.Instigator = GetInstigator();
-    SpawnParameters.Owner = this;
+    //Call it from server, due to we need to handle projectile on the server,
+    //And variable TinyTankCharacter is accessible only from server.
     if (TinyTankCharacter)
     {
-        TObjectPtr<ATinyTankProjectile> Projectile = GetWorld()->SpawnActor<ATinyTankProjectile>
-            (
-                TinyTankCharacter->GetProjectileClass(),
-                TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentLocation(),
-                TinyTankCharacter->GetProjectileSpawnPoint()->GetComponentRotation(),
-                SpawnParameters
-            );
+        TinyTankCharacter->MakeFire(NewFireHoldTime);
     }
 }
 

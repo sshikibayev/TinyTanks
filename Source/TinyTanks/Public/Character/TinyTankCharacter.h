@@ -67,7 +67,9 @@ public:
     void ReceiveDestinationForMovement(const FVector& NewDestination);
     void SmartMovement(const FVector& NewDestination);
     void StopMovement();
+    void AddFireImpulse(const float ForceMultiplier);
 
+    void MakeFire(const float HoldTime);
     void HandleDestruction();
 
 protected:
@@ -76,6 +78,8 @@ protected:
     virtual void Tick(float DeltaSeconds) override;
     virtual void PossessedBy(AController* NewController) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    virtual TObjectPtr<ATinyTankProjectile> CreateProjectile(const float ForceMultiplier);
 
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
@@ -91,6 +95,11 @@ protected:
     TObjectPtr<USoundBase> DeathSound;
     UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<UCameraShakeBase> DeathCameraShakeClass;
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    int MaxBullets{ 5 };
+    int CurrentBullets{ 0 };
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float FireImpulseForce{ 750.0f };
 
 private:
     UPROPERTY(ReplicatedUsing = OnRep_UpdateColor)

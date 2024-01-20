@@ -53,6 +53,8 @@ protected:
     UFUNCTION()
     virtual void CharacterDead();
     UFUNCTION()
+    void OnFireHold();
+    UFUNCTION()
     void OnFirePressed();
     UFUNCTION()
     void StopFire();
@@ -77,14 +79,17 @@ private:
     float MovementHoldRate{ 0.01f };
     FTimerHandle MovementHoldingTimer;
     bool bMovementHolding{ false };
+    float FollowTime{ 0.0f };
 
     UPROPERTY(EditAnywhere, Category = Widget)
     TSubclassOf<UW_Scoreboard> ScoreboardClass;
 
+    //Move to a TinyTankCharacter
     UPROPERTY(EditAnywhere, Category = Combat)
-    float FireRate{ 0.25f };
+    float FireRate{ 0.5f };
     FTimerHandle FiringTimer;
     bool bFiringWeapon{ false };
+    float FireHoldTime{ 0.0f };
 
     UPROPERTY()
     TObjectPtr<UW_Scoreboard> WBP_Scoreboard;
@@ -93,11 +98,10 @@ private:
 
     TObjectPtr<ATinyTankCharacter> TinyTankCharacter;
     FVector CachedDestination;
-    float FollowTime{ 0.0f };
     int ColorID{ 0 };
 
     UFUNCTION(Server, Reliable)
-    void ServerHandleFire();
+    void ServerHandleFire(const float NewFireHoldTime);
 
     //Movement RPC's
     UFUNCTION(Server, Unreliable)
@@ -117,6 +121,7 @@ private:
     void SetDestinationForTheTinyTank(const FVector& Destination);
     void SmartMovement(const FVector& Destination);
     void StopMovement();
+    void AddFireImpulse(const float ForceMultiplier);
     void SetupInputMode();
     void ScoreboardInitialization();
     void OneTouchAction();

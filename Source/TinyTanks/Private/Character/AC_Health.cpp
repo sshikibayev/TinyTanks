@@ -39,7 +39,12 @@ void UAC_Health::DamageTaken(AActor* DamagedActor, float Damage, const UDamageTy
 {
     if (Damage > 0.0f)
     {
+        UE_LOG(LogTemp, Warning, TEXT("Damage received: %f"), Damage);
+
         Health = FMath::Clamp(Health - Damage, 0, MaxHealth);
+
+        UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health);
+
         if (Health <= 0 && GM_TinyTanks)
         {
             GM_TinyTanks->ActorDied(DamagedActor);

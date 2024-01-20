@@ -11,7 +11,7 @@
 #include "AI/PC_AIController.h"
 #include "Character/PS_TinyTank.h"
 #include "Character/CMC_TinyTank.h"
-
+#include "Projectile/TinyTankProjectile.h"
 #include "Net/UnrealNetwork.h"
 
 ATinyTankCharacter::ATinyTankCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer.SetDefaultSubobjectClass<UCMC_TinyTank>(ACharacter::CharacterMovementComponentName))
@@ -67,6 +67,8 @@ ATinyTankCharacter::ATinyTankCharacter(const FObjectInitializer& ObjectInitializ
 void ATinyTankCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
+
+    CurrentBullets = MaxBullets;
 }
 
 void ATinyTankCharacter::BeginPlay()
@@ -126,6 +128,45 @@ void ATinyTankCharacter::StopMovement()
         GetController()->StopMovement();
         bActivateMovement = false;
     }
+}
+
+void ATinyTankCharacter::MakeFire(const float HoldTime)
+{
+    if (CurrentBullets > 0)
+    {
+        CreateProjectile(HoldTime);
+        AddFireImpulse(HoldTime);
+        CurrentBullets = FMath::Clamp(--CurrentBullets, 0, MaxBullets);
+    }
+}
+
+TObjectPtr<ATinyTankProjectile> ATinyTankCharacter::CreateProjectile(const float ForceMultiplier)
+{
+    FActorSpawnParameters SpawnParameters;
+    SpawnParameters.Instigator = GetInstigator();
+    SpawnParameters.Owner = this;
+
+    TObjectPtr<ATinyTankProjectile> Projectile = GetWorld()->SpawnActor<ATinyTankProjectile>
+        (
+            GetProjectileClass(),
+            GetProjectileSpawnPoint()->GetComponentLocation(),
+            GetProjectileSpawnPoint()->GetComponentRotation(),
+            SpawnParameters
+        );
+
+    if (Projectile)
+    {
+        Projectile->SetFireMultiplier(ForceMultiplier);
+    }
+
+    return Projectile;
+}
+
+void ATinyTankCharacter::AddFireImpulse(const float ForceMultiplier)
+{
+    const FVector Backward{ -GetActorForwardVector() };
+    const FVector FinalForceImpulse{ Backward * ForceMultiplier * FireImpulseForce };
+    LaunchCharacter(FinalForceImpulse, false, false);
 }
 
 void ATinyTankCharacter::HandleDestruction()
