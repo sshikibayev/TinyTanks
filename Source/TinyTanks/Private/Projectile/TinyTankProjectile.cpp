@@ -8,6 +8,10 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Camera/CameraShakeBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Character/TinyTankCharacter.h"
+#include "Character/PC_TinyTanks.h"
+#include "Character/PS_TinyTank.h"
+
 #include "Character/GM_TinyTanks.h"
 
 
@@ -77,15 +81,6 @@ void ATinyTankProjectile::InitializeVelocityOfTheProject(const float FireHoldTim
     }
 }
 
-//*Killer - is a APlayerController;
-void ATinyTankProjectile::AddScoreForKilling(const TObjectPtr<AActor> Killer)
-{
-    if (GetOwner() && GetOwner()->HasAuthority() && GM_TinyTanks)
-    {
-        GM_TinyTanks->ActorScored(Cast<APlayerController>(Killer));
-    }
-}
-
 void ATinyTankProjectile::ShowDeathEffects()
 {
     if (HitParticles && HitSound && HitCameraShakeClass)
@@ -113,16 +108,16 @@ void ATinyTankProjectile::PlaySound(TObjectPtr<USoundBase> SoundToPlay)
 
 void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-    if (TObjectPtr<AActor> MyOwner{ GetOwner() })
+    if (TObjectPtr<ATinyTankCharacter> ProjectileOwner{ Cast<ATinyTankCharacter>(GetOwner()) })
     {
-        TObjectPtr<AController> MyOwnerInstigator{ MyOwner->GetInstigatorController() };
-        auto DamageTypeClass = UDamageType::StaticClass();
-
-        if (OtherActor && OtherActor != this && OtherActor != MyOwner && OtherActor->Tags.Contains(TinyTankTag))
+        if (OtherActor && OtherActor != this && OtherActor != ProjectileOwner && OtherActor->Tags.Contains(TinyTankTag))
         {
-            float FlewDistance{ static_cast<float>((ProjectileStartLocation - GetActorLocation()).Size()) };
-            float FlewDistanceDamage{ FlewDistance / DistanceDivider };
-            float FinalDamage{ FMath::Clamp(Damage * FireMultiplier + FlewDistanceDamage, 0, MaxDamage) };
+            TObjectPtr<AController> MyOwnerInstigator{ ProjectileOwner->GetInstigatorController() };
+            TObjectPtr<UClass> DamageTypeClass = UDamageType::StaticClass();
+
+            //Get CurrentTargetHealth before applying a damage.
+            const float CurrentTargetHealth{ GetCurrentTargetHealth(Cast<ATinyTankCharacter>(OtherActor)) };
+            const float FinalDamage{ CalculateFinalDamage() };
 
             UGameplayStatics::ApplyDamage
             (
@@ -133,14 +128,50 @@ void ATinyTankProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor
                 DamageTypeClass
             );
 
-
-            //TODO think to move it to the AC_Health
-            //Here is passing not AActor but APlayerController;
-            AddScoreForKilling(MyOwner);
+            const float FinalScore{ (CurrentTargetHealth - FinalDamage <= 0) ? CurrentTargetHealth * GetKillingScoreMultiplier(ProjectileOwner) : FinalDamage };
+            AddScore(Cast<APC_TinyTanks>(ProjectileOwner->GetMainController()), FinalScore);
         }
     }
 
     ParticleSystemComponent->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
-
     Destroy();
+}
+
+float ATinyTankProjectile::CalculateFinalDamage()
+{
+    const float FlewDistance{ static_cast<float>((ProjectileStartLocation - GetActorLocation()).Size()) };
+    const float FlewDistanceDamage{ FlewDistance / DistanceDivider };
+    const float FinalDamage{ FMath::Clamp(Damage * FireMultiplier + FlewDistanceDamage, 0, MaxDamage) };
+
+    return FinalDamage;
+}
+
+float ATinyTankProjectile::GetCurrentTargetHealth(const TObjectPtr<ATinyTankCharacter> ProjectileTarget)
+{
+    if (ProjectileTarget)
+    {
+        return ProjectileTarget->GetCurrentHealth();
+    }
+
+    return 0.0f;
+}
+
+float ATinyTankProjectile::GetKillingScoreMultiplier(const TObjectPtr<ATinyTankCharacter> ProjectileOwner)
+{
+    TObjectPtr<APlayerController> MainController{ ProjectileOwner->GetMainController() };
+    if (MainController && MainController->PlayerState)
+    {
+        return Cast<APS_TinyTank>(MainController->PlayerState)->GetKillingScoreMultiplier();
+    }
+
+    return 0.0f;
+}
+
+void ATinyTankProjectile::AddScore(const TObjectPtr<APC_TinyTanks> KillerController, const float DamageScore)
+{
+    //Called only on server due to GM_TinyTanks exist only on server.
+    if (GM_TinyTanks && KillerController)
+    {
+        GM_TinyTanks->UpdateScore(KillerController, DamageScore);
+    }
 }

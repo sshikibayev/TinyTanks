@@ -8,7 +8,6 @@
 #include "PS_TinyTank.generated.h"
 
 class UW_PlayerData;
-class APlayerController;
 
 UCLASS()
 class TINYTANKS_API APS_TinyTank : public APlayerState
@@ -16,11 +15,11 @@ class TINYTANKS_API APS_TinyTank : public APlayerState
     GENERATED_BODY()
 
 public:
-    FORCEINLINE int GetPlayerKillScore() const
+    FORCEINLINE int GetPlayerScore() const
     {
-        return PlayerKillingScore;
+        return PlayerScore;
     }
-    FORCEINLINE FText GetPlayerNickname() const
+    FORCEINLINE FName GetPlayerNickname() const
     {
         return PlayerNickname;
     }
@@ -28,13 +27,27 @@ public:
     {
         return ColorID;
     }
+    FORCEINLINE float GetKillingScoreMultiplier() const
+    {
+        return KillingScoreMultiplier;
+    }
+
     FORCEINLINE void SetColorID(const int NewColorID)
     {
         ColorID = NewColorID;
     }
 
-    void SetPlayerKillingScore(const int NewScore);
-    void SetPlayerNickname(const FText& NewName);
+    FORCEINLINE void SetPlayerNickname(const FName& NewName)
+    {
+        PlayerNickname = NewName;
+        OnRep_UpdateName();
+    }
+
+    FORCEINLINE void SetPlayerScore(const float NewScore)
+    {
+        PlayerScore = NewScore;
+        OnRep_UpdateScore();
+    }
 
 protected:
     virtual void PostInitializeComponents() override;
@@ -45,15 +58,16 @@ private:
     UPROPERTY(EditAnywhere, Category = Widget)
     TSubclassOf<UW_PlayerData> PlayerDataClass;
 
+    UPROPERTY(EditAnywhere, Category = "Score")
+    float KillingScoreMultiplier{ 2.5f };
+
     UPROPERTY()
     TObjectPtr<UW_PlayerData> WBP_PlayerData;
-    UPROPERTY()
-    TObjectPtr<APlayerController> BasePlayerController;
 
-    UPROPERTY(ReplicatedUsing = OnRep_UpdateScore)
-    int PlayerKillingScore{ 0 };
     UPROPERTY(ReplicatedUsing = OnRep_UpdateName)
-    FText PlayerNickname{ FText::FromString(TEXT("Player name")) };
+    FName PlayerNickname{ TEXT("Player name") };
+    UPROPERTY(ReplicatedUsing = OnRep_UpdateScore)
+    float PlayerScore{ 0 };
 
     int ColorID{ 0 };
 
@@ -61,11 +75,13 @@ private:
     void ServerSendNicknameFromClientToServer(const FName& NewPlayerNickname);
 
     UFUNCTION()
-    void WidgetDataUpdate();
-    UFUNCTION()
     void OnRep_UpdateScore();
     UFUNCTION()
     void OnRep_UpdateName();
 
+    UFUNCTION()
+    void WidgetDataUpdate();
+
+    void InitializePlayerNickname();
     void InitializePlayerDataWidgetToScoreboard();
 };

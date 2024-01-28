@@ -40,11 +40,14 @@ void AGM_TinyTanks::ActorDied(const TObjectPtr<AActor> DeadActor)
     }
 }
 
-void AGM_TinyTanks::ActorScored(const TObjectPtr<APlayerController> ScoredActorController)
+void AGM_TinyTanks::UpdateScore(const TObjectPtr<APC_TinyTanks> ScoredController, const float FinalScore)
 {
-    if (ScoredActorController)
+    if (ScoredController)
     {
-        UpdateKillingScore(ScoredActorController);
+        if (TObjectPtr<APS_TinyTank> PS_TinyTankScored = Cast<APS_TinyTank>(ScoredController->PlayerState))
+        {
+            PS_TinyTankScored->SetPlayerScore(PS_TinyTankScored->GetPlayerScore() + FinalScore);
+        }
     }
 }
 
@@ -73,8 +76,6 @@ void AGM_TinyTanks::CharacterInitialization(const TObjectPtr<APlayerController> 
         TinyTankCharacter->SetMainController(PC_TinyTank);
         TinyTankCharacter->SetPlayerState(PC_TinyTank->GetPlayerState<APS_TinyTank>());
         PC_TinyTank->SetTinyTankCharacter(TinyTankCharacter);
-
-        //TinyTankCharacter->OnSpawn.Broadcast();
     }
 }
 
@@ -95,17 +96,6 @@ void AGM_TinyTanks::MakeListOfSpawnPoints()
     SpawnPoints.Emplace(FTransform(FRotator(0.0f, 270.0f, 0.0f), FVector(410.0f, 2840.0f, 120.0f)));
 }
 
-void AGM_TinyTanks::UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController)
-{
-    if (ScoreActorController)
-    {
-        TObjectPtr<APS_TinyTank> PS_TinyTankScored = Cast<APS_TinyTank>(ScoreActorController->PlayerState);
-        if (PS_TinyTankScored)
-        {
-            PS_TinyTankScored->SetPlayerKillingScore(PS_TinyTankScored->GetPlayerKillScore() + PointsForKilling);
-        }
-    }
-}
 
 bool AGM_TinyTanks::GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult)
 {

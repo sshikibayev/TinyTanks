@@ -8,7 +8,7 @@
 #include "GM_TinyTanks.generated.h"
 
 class ATinyTankCharacter;
-class APC_AIController;
+class APC_TinyTanks;
 
 UCLASS()
 class TINYTANKS_API AGM_TinyTanks : public AGameMode
@@ -19,7 +19,7 @@ public:
     AGM_TinyTanks();
 
     void ActorDied(const TObjectPtr<AActor> DeadActor);
-    void ActorScored(const TObjectPtr<APlayerController> ScoredActorController);
+    void UpdateScore(const TObjectPtr<APC_TinyTanks> ScoredController, const float FinalScore);
     int GetMaterialID();
 
 protected:
@@ -33,14 +33,12 @@ private:
     TSubclassOf<ATinyTankCharacter> TinyTankCharacterClass;
 
     FName TinyTankTag{ "TinyTank" };
-    int PointsForKilling{ 1 };
     int TotalMaterials{ 4 };
     TArray<int> ListOfMaterialsID;
 
     void CharacterInitialization(const TObjectPtr<APlayerController> MainController);
     void MakeListOfMaterialsID();
     void MakeListOfSpawnPoints();
-    void UpdateKillingScore(const TObjectPtr<APlayerController> ScoreActorController);
     bool GetOverlapResult(const FVector& OverlapLocation, TArray<struct FOverlapResult>& OutOverlappedResult);
     FTransform GetValidSpawnPoint();
     FTransform GetSpawnPoint();

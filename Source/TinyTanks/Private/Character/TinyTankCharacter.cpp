@@ -5,13 +5,13 @@
 
 #include "Components/CapsuleComponent.h"
 #include "Character/PC_TinyTanks.h"
-#include "Kismet/GamePlayStatics.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "AI/TinyTankAICharacter.h"
-#include "AI/PC_AIController.h"
 #include "Character/PS_TinyTank.h"
+#include "Kismet/GamePlayStatics.h"
+#include "AI/PC_AIController.h"
 #include "Character/CMC_TinyTank.h"
 #include "Projectile/TinyTankProjectile.h"
+#include "Character/AC_Health.h"
+
 #include "Net/UnrealNetwork.h"
 
 ATinyTankCharacter::ATinyTankCharacter(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer.SetDefaultSubobjectClass<UCMC_TinyTank>(ACharacter::CharacterMovementComponentName))
@@ -26,6 +26,8 @@ ATinyTankCharacter::ATinyTankCharacter(const FObjectInitializer& ObjectInitializ
 
     TurretMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Turret mesh"));
     TurretMeshComponent->SetupAttachment(BaseMeshComponent);
+
+    HealthComponent = CreateDefaultSubobject<UAC_Health>(TEXT("Health component"));
 
     ProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("Projectile spawn point"));
     ProjectileSpawnPoint->SetupAttachment(TurretMeshComponent);
@@ -69,6 +71,8 @@ void ATinyTankCharacter::PostInitializeComponents()
     Super::PostInitializeComponents();
 
     CurrentBullets = MaxBullets;
+
+    InitializeHealth();
 }
 
 void ATinyTankCharacter::BeginPlay()
@@ -99,6 +103,11 @@ void ATinyTankCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
     DOREPLIFETIME(ThisClass, MaterialID);
+}
+
+void ATinyTankCharacter::OnHealthUpdate(const float Health)
+{
+    CurrentHealth = Health;
 }
 
 void ATinyTankCharacter::OnRep_UpdateColor()
@@ -156,6 +165,7 @@ TObjectPtr<ATinyTankProjectile> ATinyTankCharacter::CreateProjectile(const float
 
     if (Projectile)
     {
+        Projectile->SetOwner(this);
         Projectile->SetFireMultiplier(ForceMultiplier);
     }
 
@@ -196,6 +206,15 @@ void ATinyTankCharacter::OnApplyNewMaterial()
     }
 }
 
+void ATinyTankCharacter::InitializeHealth()
+{
+    if (HealthComponent)
+    {
+        MaxHealth = HealthComponent->GetMaxHealth();
+        CurrentHealth = MaxHealth;
+        HealthComponent->OnHealthUpdate.AddDynamic(this, &ATinyTankCharacter::OnHealthUpdate);
+    }
+}
 
 void ATinyTankCharacter::ContinuesMovement()
 {

@@ -13,6 +13,8 @@ class USoundBase;
 class UCameraShakeBase;
 class UParticleSystemComponent;
 class AGM_TinyTanks;
+class APC_TinyTanks;
+class ATinyTankCharacter;
 
 UCLASS()
 class TINYTANKS_API ATinyTankProjectile : public AActor
@@ -74,7 +76,10 @@ private:
     void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
     void InitializeVelocityOfTheProject(const float FireHoldTime);
-    void AddScoreForKilling(const TObjectPtr<AActor> Killer);
+    float CalculateFinalDamage();
+    void AddScore(const TObjectPtr<APC_TinyTanks> KillerController, const float DamageScore);
+    float GetCurrentTargetHealth(const TObjectPtr<ATinyTankCharacter> ProjectileTarget);
+    float GetKillingScoreMultiplier(const TObjectPtr<ATinyTankCharacter> ProjectileOwner);
     void ShowDeathEffects();
     void PlaySound(TObjectPtr<USoundBase> SoundToPlay);
 };

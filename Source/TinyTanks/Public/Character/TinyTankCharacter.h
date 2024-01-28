@@ -11,9 +11,8 @@ class UParticleSystem;
 class USoundBase;
 class UCameraShakeBase;
 class ATinyTankProjectile;
-class ATinyTankAICharacter;
-class APC_AIController;
 class APS_TinyTank;
+class UAC_Health;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpawn);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeath);
@@ -64,6 +63,16 @@ public:
         MaterialID = ID;
     }
 
+    FORCEINLINE float GetCurrentHealth() const
+    {
+        return CurrentHealth;
+    }
+
+    FORCEINLINE float GetMaxHealth() const
+    {
+        return MaxHealth;
+    }
+
     void ReceiveDestinationForMovement(const FVector& NewDestination);
     void SmartMovement(const FVector& NewDestination);
     void StopMovement();
@@ -85,6 +94,8 @@ protected:
     TObjectPtr<UStaticMeshComponent> BaseMeshComponent;
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<UStaticMeshComponent> TurretMeshComponent;
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    TObjectPtr<UAC_Health> HealthComponent;
     UPROPERTY(VisibleAnywhere, Category = "Components")
     TObjectPtr<USceneComponent> ProjectileSpawnPoint;
     UPROPERTY(EditDefaultsOnly, Category = "Combat")
@@ -124,12 +135,19 @@ private:
     bool bActivateMovement{ false };
     //
 
+    //Stats
+    float MaxHealth{ 0.0f };
+    float CurrentHealth{ 0.0f };
+    //
 
+    UFUNCTION()
+    void OnHealthUpdate(const float Health);
     UFUNCTION()
     void OnRep_UpdateColor();
     UFUNCTION()
     void OnApplyNewMaterial();
 
+    void InitializeHealth();
     void ContinuesMovement();
     void BindOnMaterialApplyEvent();
     void ToggleOnSpawnEvent();

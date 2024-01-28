@@ -6,6 +6,8 @@
 #include "Character/GM_TinyTanks.h"
 #include "Kismet/GamePlayStatics.h"
 
+#include "Net/UnrealNetwork.h"
+
 
 UAC_Health::UAC_Health()
 {
@@ -25,6 +27,12 @@ void UAC_Health::BeginPlay()
     }
 }
 
+void UAC_Health::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    DOREPLIFETIME(ThisClass, Health);
+    DOREPLIFETIME(ThisClass, OnHealthUpdate);
+}
+
 void UAC_Health::OnComponentDestroyed(bool bDestroyingHierarchy)
 {
     if (GetOwner()->HasAuthority())
@@ -39,11 +47,8 @@ void UAC_Health::DamageTaken(AActor* DamagedActor, float Damage, const UDamageTy
 {
     if (Damage > 0.0f)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Damage received: %f"), Damage);
-
         Health = FMath::Clamp(Health - Damage, 0, MaxHealth);
-
-        UE_LOG(LogTemp, Warning, TEXT("Health: %f"), Health);
+        OnHealthUpdate.Broadcast(Health);
 
         if (Health <= 0 && GM_TinyTanks)
         {
